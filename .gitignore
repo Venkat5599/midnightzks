@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+.next/
+out/
+
+# Compiled circuit artifacts.
+# Proving keys are large (5MB+ each) and are reproducible from source via
+# `npm run compact`. Verifier keys and ZKIR are kept in-tree so reviewers can
+# inspect the circuits without installing the toolchain.
+contract/src/managed/**/keys/*.prover
+contract/src/managed/**/zkir/*.bzkir
+
+.env
+.env.local
+*.log
+.DS_Store
