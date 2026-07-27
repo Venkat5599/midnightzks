@@ -1,0 +1,34 @@
+{
+  "name": "@gatekeeper/deploy",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Generates a Preprod wallet and deploys the Gatekeeper registry",
+  "scripts": {
+    "new-wallet": "node --experimental-strip-types src/new-wallet.ts",
+    "address": "node --experimental-strip-types src/address.ts",
+    "deploy": "node --experimental-strip-types src/deploy.ts"
+  },
+  "dependencies": {
+    "@gatekeeper/contract": "file:../contract",
+    "@midnight-ntwrk/compact-runtime": "0.16.0",
+    "@midnight-ntwrk/ledger": "4.0.0",
+    "@midnight-ntwrk/midnight-js-contracts": "4.1.1",
+    "@midnight-ntwrk/midnight-js-http-client-proof-provider": "4.1.1",
+    "@midnight-ntwrk/midnight-js-indexer-public-data-provider": "4.1.1",
+    "@midnight-ntwrk/midnight-js-level-private-state-provider": "4.1.1",
+    "@midnight-ntwrk/midnight-js-network-id": "4.1.1",
+    "@midnight-ntwrk/midnight-js-types": "4.1.1",
+    "@midnight-ntwrk/wallet": "5.0.0",
+    "@midnight-ntwrk/wallet-api": "5.0.0",
+    "@midnight-ntwrk/zswap": "4.0.0",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
