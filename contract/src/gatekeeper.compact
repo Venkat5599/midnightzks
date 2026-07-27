@@ -91,9 +91,14 @@ export circuit initialize(): [] {
 /// Operator adds an approved member's commitment to the tree.
 /// The operator learns the commitment (they issued it); the chain learns
 /// only that the approved set grew by one.
+///
+/// `insert`, not `insertHash`: the leaf stored is leafHash(commitment), which
+/// is what `merkleTreePathRoot` recomputes when `proveAccess` validates a path
+/// whose `leaf` field is the raw commitment. Storing the commitment directly
+/// would make every membership proof fail against the root.
 export circuit register(commitment: Bytes<32>): [] {
   assert(commitmentOf(memberSecret()) == admin, "caller is not the operator");
-  members.insertHash(disclose(commitment));
+  members.insert(disclose(commitment));
 }
 
 /// Operator revokes the member at `index`.

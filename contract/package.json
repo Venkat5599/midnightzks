@@ -1,0 +1,40 @@
+{
+  "name": "@gatekeeper/contract",
+  "version": "0.1.0",
+  "description": "Compact contract for Gatekeeper: anonymous, revocable allowlist access on Midnight",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./managed": {
+      "types": "./src/managed/gatekeeper/contract/index.d.ts",
+      "default": "./src/managed/gatekeeper/contract/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src/managed"
+  ],
+  "scripts": {
+    "compact": "compact compile src/gatekeeper.compact src/managed/gatekeeper",
+    "build": "tsc --build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/compact-runtime": "0.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

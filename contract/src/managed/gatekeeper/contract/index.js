@@ -199,14 +199,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('register',
                                      'argument 1 (as invoked from Typescript)',
-                                     'gatekeeper.compact line 94 char 1',
+                                     'gatekeeper.compact line 99 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(commitment_0.buffer instanceof ArrayBuffer && commitment_0.BYTES_PER_ELEMENT === 1 && commitment_0.length === 32)) {
           __compactRuntime.typeError('register',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'gatekeeper.compact line 94 char 1',
+                                     'gatekeeper.compact line 99 char 1',
                                      'Bytes<32>',
                                      commitment_0)
         }
@@ -235,14 +235,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('revoke',
                                      'argument 1 (as invoked from Typescript)',
-                                     'gatekeeper.compact line 109 char 1',
+                                     'gatekeeper.compact line 114 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(index_0) === 'bigint' && index_0 >= 0n && index_0 <= 18446744073709551615n)) {
           __compactRuntime.typeError('revoke',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'gatekeeper.compact line 109 char 1',
+                                     'gatekeeper.compact line 114 char 1',
                                      'Uint<0..18446744073709551616>',
                                      index_0)
         }
@@ -269,14 +269,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('proveAccess',
                                      'argument 1 (as invoked from Typescript)',
-                                     'gatekeeper.compact line 127 char 1',
+                                     'gatekeeper.compact line 132 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(verifierId_0.buffer instanceof ArrayBuffer && verifierId_0.BYTES_PER_ELEMENT === 1 && verifierId_0.length === 32)) {
           __compactRuntime.typeError('proveAccess',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'gatekeeper.compact line 127 char 1',
+                                     'gatekeeper.compact line 132 char 1',
                                      'Bytes<32>',
                                      verifierId_0)
         }
@@ -577,8 +577,10 @@ export class Contract {
                                                          value: { value: _descriptor_17.toValue(1n),
                                                                   alignment: _descriptor_17.alignment() } }] } },
                                        { push: { storage: true,
-                                                 value: __compactRuntime.StateValue.newCell({ value: _descriptor_0.toValue(commitment_0),
-                                                                                              alignment: _descriptor_0.alignment() }).encode() } },
+                                                 value: __compactRuntime.StateValue.newCell(__compactRuntime.leafHash(
+                                                                                              { value: _descriptor_0.toValue(commitment_0),
+                                                                                                alignment: _descriptor_0.alignment() }
+                                                                                            )).encode() } },
                                        { ins: { cached: false, n: 1 } },
                                        { ins: { cached: true, n: 1 } },
                                        { idx: { cached: false,
