@@ -20,7 +20,11 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
 
-    "types": ["vite/client"]
+    // "node" is for vite.config.ts, which reads process.env and runs in Node
+    // rather than the browser. It typechecked locally without this only
+    // because @types/node was hoisted out of the contract dependency; a clean
+    // install has no such accident, and CI caught it.
+    "types": ["vite/client", "node"]
   },
   "include": ["src", "vite.config.ts"]
 }
