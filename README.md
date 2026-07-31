@@ -2,6 +2,16 @@
 
 **Anonymous, revocable allowlist access on Midnight.**
 
+[![CI](https://github.com/Venkat5599/mn/actions/workflows/ci.yml/badge.svg)](https://github.com/Venkat5599/mn/actions/workflows/ci.yml)
+[![Deploy](https://github.com/Venkat5599/mn/actions/workflows/deploy.yml/badge.svg)](https://github.com/Venkat5599/mn/actions/workflows/deploy.yml)
+
+| | |
+| --- | --- |
+| Live dApp | https://kageai.me/mn/ |
+| Network | Midnight Preview |
+| Contract address | _see [Deployment](#deployment)_ |
+| Source | https://github.com/Venkat5599/mn |
+
 An operator issues credentials to approved people. Those people prove they are
 on the list — to a newsroom, a clinic, a support forum, a beta programme —
 without revealing who they are, and without any two of those places being able
@@ -13,19 +23,29 @@ prove membership without revealing identity.**
 
 ## The idea
 
-Allowlists are how most gated things work: a press-only briefing, a patient
-portal, an employee discount, a private beta. Today they are implemented by
-handing over an identity — an email, an SSO account, a wallet address — and
-letting the gate look you up. That makes the gate a surveillance point. It
-learns who you are and when you showed up, and if two gates compare notes they
-can reconstruct your movements across both.
+Most token-gated apps today work by asking you to connect a wallet and then
+reading everything in it. The app learns your whole balance history and every
+other app you have touched. Gatekeeper flips that: the app should only ever
+learn one thing — **are you allowed in, or not.** Nothing else.
 
-Gatekeeper keeps the allowlist and drops the identity. The operator publishes a
-Merkle tree of *commitments* — hashes of secrets only the holders know. To get
-in, a holder proves in zero knowledge that their secret hashes to a leaf of that
-tree. The gate learns one bit: "someone on the list is here." It never learns
-which someone. Revocation still works, immediately, because the tree is public
-even though its contents are meaningless to observers.
+So membership lives as a commitment inside a Merkle tree, and access is granted
+by a zero-knowledge proof rather than by showing a wallet. The operator
+publishes a tree of *commitments*, hashes of secrets only the holders know. To
+get in, a holder proves in zero knowledge that they know a secret whose hash
+sits somewhere in that tree, and publishes a nullifier instead of an identity.
+
+The nullifier is hashed from the secret plus the verifier id plus the current
+epoch. Scoping it to the verifier means two different sites cannot correlate the
+same person across both of them. Scoping it to the epoch means a revocation
+kills proofs that were already outstanding, and not only future ones. The public
+ledger holds commitments, a nullifier set, an epoch counter and an access count.
+It holds zero identities.
+
+Private allowlists are the boring plumbing a lot of real things need: DAO voting
+gates, paid community access, age checks, employer verification. All of them
+currently leak far more than they need to. Midnight is the only chain where the
+allowlist can sit on chain while the membership itself stays private, which is
+the whole reason it was picked.
 
 The design is not "hide everything." It is a specific, defensible choice about
 which single fact becomes public and which stay private.
@@ -118,27 +138,41 @@ public tree, which needs no help from the operator.
 ```
 contract/
   src/gatekeeper.compact          the contract
+  src/index.ts                    what consumers import
   src/witnesses.ts                witness implementations (local, never sent)
   src/types.ts                    private state
   src/test/simulator.ts           runs circuits against the real Compact runtime
   src/test/gatekeeper.test.ts     the test suite
   src/managed/gatekeeper/         compiler output: circuits, keys, ZKIR
+  compile.sh                      compiles via WSL on Windows
+deploy/
+  src/new-wallet.ts               generates a throwaway seed
+  src/address.ts                  prints the address and balance
+  src/deploy.ts                   deploys, then binds the operator
+  src/providers.ts                compiled-contract binding + providers
+  src/zk-config.ts                serves ZK artifacts from disk
+frontend/
+  src/App.tsx                     the page
+  src/Plate.tsx                   the allowlist, drawn
+  src/lib/lace.ts                 wallet connect / disconnect
 .github/workflows/ci.yml          compile + typecheck + test on every push
+.github/workflows/deploy.yml      publishes the dApp to GitHub Pages
 ```
 
 ## Running it locally
 
 Requires **Node 22+**, **Docker** (for the proof server), and the **Compact
 toolchain**. On Windows, install the toolchain inside WSL — the compiler ships
-for Linux and macOS only.
+for Linux and macOS only, and Windows has its own unrelated `compact.exe` (the
+NTFS compression tool) that will shadow it on `PATH`.
 
 ```bash
 # 1. Compact toolchain
 curl --proto '=https' --tlsv1.2 -LsSf \
   https://github.com/midnightntwrk/compact/releases/latest/download/compact-installer.sh | sh
 export PATH="$HOME/.local/bin:$PATH"
-compact update            # installs the compiler (0.31.1 at time of writing)
-compact --version
+compact update
+compact --version         # compact 0.5.1 at time of writing
 
 # 2. Compile the circuits and run the tests
 cd contract
@@ -147,20 +181,83 @@ npm run compact           # writes src/managed/gatekeeper/
 npm test
 
 # 3. Proof server, for anything that touches a real network
-docker run -p 6300:6300 midnightnetwork/proof-server:latest -- \
-  'midnight-proof-server --network testnet'
+docker run -d -p 6300:6300 -e PORT=6300 midnightnetwork/proof-server:latest
+
+# 4. The dApp
+cd ../frontend
+npm install
+npm run dev               # http://localhost:5173
 ```
 
-`npm run compact` reports the circuits it built:
+On Windows, step 2's compile is `wsl -d Ubuntu -- bash contract/compile.sh`.
+
+The compiler prints exactly this, and nothing more — it reports the count, not
+the names:
 
 ```
+$ compact compile src/gatekeeper.compact src/managed/gatekeeper
 Compiling 4 circuits:
-  initialize, register, revoke, proveAccess
 ```
 
-and produces `src/managed/gatekeeper/` containing `contract/` (generated
-TypeScript), `keys/` (prover and verifier keys per circuit) and `zkir/` (the ZK
-intermediate representation).
+The four circuits it built are visible in the output tree:
+
+```
+$ ls src/managed/gatekeeper/keys src/managed/gatekeeper/zkir
+keys: initialize.prover  initialize.verifier   proveAccess.prover  proveAccess.verifier
+      register.prover    register.verifier     revoke.prover       revoke.verifier
+zkir: initialize.zkir    proveAccess.zkir      register.zkir       revoke.zkir
+```
+
+![compile output](docs/screenshots/compile.png)
+
+The same output, as plain text, is in
+[`docs/screenshots/compile-output.txt`](docs/screenshots/compile-output.txt).
+
+`src/managed/gatekeeper/` holds `contract/` (generated TypeScript), `keys/`
+(prover and verifier keys per circuit) and `zkir/` (the ZK intermediate
+representation, in both readable and binary form).
+
+## Deployment
+
+The proof server must be running first: proving happens locally, because a
+proof server is handed the witness, and sending that to someone else's host
+would give away the secret this design exists to protect.
+
+```bash
+cd deploy
+npm install
+npm run new-wallet        # writes a throwaway seed to deploy/.env (gitignored)
+npm run address           # prints the address; fund it from the faucet
+npm run deploy            # deploys, then calls initialize
+```
+
+Deployment is two transactions on purpose. The first puts the circuits and an
+empty ledger on chain; `initialize` then writes the operator commitment into
+`admin`. Keeping them apart means the registry is inert until somebody proves
+they hold the operator secret, rather than the contract trusting whoever
+happened to submit the deployment.
+
+The result is recorded in `deploy/deployment.json`:
+
+```json
+{
+  "network": "preview",
+  "contractAddress": "0200…",
+  "deployTxId": "…",
+  "initializeTxId": "…",
+  "operatorCommitment": "…",
+  "deployedAt": "2026-07-31T00:00:00.000Z"
+}
+```
+
+![deployed contract](docs/screenshots/deployed.png)
+
+A note on networks, because it cost real time: the `testnet-02` endpoints this
+project started against no longer resolve, and the indexer's GraphQL path moved
+to `/api/v3/graphql`. A wrong endpoint fails silently — the wallet still builds
+and still prints a correct address, because the address derives locally from the
+seed, and simply never syncs. The symptom looks like an empty wallet rather than
+a bad URL.
 
 ## Tests
 
@@ -179,14 +276,91 @@ contract fires exactly as it would on Preprod. It covers the operator checks,
 the membership proof, double-spend rejection, cross-verifier unlinkability, and
 each of the three things revocation has to do.
 
-## Status
+## The dApp
 
-- [x] Toolchain installed; contract compiles to 4 ZK circuits
-- [x] Test suite passing (14 tests)
-- [x] `managed/` generated (circuits + keys + ZKIR)
-- [x] CI compiling from source and running tests on every push
-- [ ] Deployed to Preprod (address pending)
-- [ ] Frontend wired to Lace
+![the dApp](docs/screenshots/dapp.png)
+
+The page does one thing, because the product is one thing. It connects Lace,
+reports what the wallet told it, and says plainly what that does and does not
+reveal. Live at **https://kageai.me/mn/**, published by CI on every push to
+`master`.
+
+Connect and disconnect are honest about their limits. The DApp connector API
+has no revoke method — permission lives in the extension, and only the user can
+withdraw it there — so the button says "forget this session" rather than
+implying a revocation that did not happen.
+
+The dApp also refuses to proceed if the wallet reports a different network than
+it was built for, rather than letting anyone sign against the wrong chain by
+accident.
+
+## Progress against the challenge
+
+**Level 1 — New Moon**
+
+- [x] Toolchain installed; contract compiles via `compact compile`
+- [x] Passing test suite (14 tests)
+- [x] `managed/` present (circuits + keys + ZKIR)
+- [x] Public GitHub repository with README and setup instructions
+- [x] Screenshot of successful compile output
+- [x] README section explaining public state vs private witness
+- [x] Initial product idea paragraph
+- [x] Minimum 5 meaningful commits
+
+**Level 2 — Waxing Crescent**
+
+- [x] Lace wallet connect / disconnect implemented
+- [x] Live demo link
+- [x] README documenting the privacy claim
+- [x] Minimum 8 meaningful commits
+- [ ] Deployed contract with a verifiable address — blocked, see [Deployment](#deployment)
+- [ ] Demo video: wallet connect + a successful circuit call
+
+**Level 3 — First Quarter**
+
+- [x] Approved idea from the provided list (Private Allowlist Access)
+- [x] 3+ tests passing (14)
+- [x] CI/CD pipeline running, with badges above
+- [x] README "privacy model" section: what an observer can and cannot learn
+- [x] Minimum 10 meaningful commits
+- [ ] Demo video (1 minute) showing full functionality
+
+**Level 4 — Waxing Gibbous**
+
+- [x] MVP live
+- [x] Documentation: README, setup, usage
+- [x] CI/CD running on the product repo
+- [x] Minimum 15 meaningful commits
+- [ ] Verifiable contract address — blocked, see [Deployment](#deployment)
+- [ ] Product X profile, linked here
+- [ ] Demo video of the MVP
+
+Two of the unticked items cannot be produced from a repository at all: a screen
+recording and a social profile. The third is a live blocker rather than
+unfinished work — the deployment pipeline is written and runs end to end up to
+the point of needing funds, and the faucet is the thing in the way. See
+[Deployment](#deployment).
+
+## Where this goes next
+
+Three things, in the order they unlock value:
+
+**Multiple issuers.** Today there is one operator commitment. An issuer registry
+would let a DAO, a university and an employer each hold their own subtree and
+their own revocation epoch. A verifier then declares which issuers it trusts,
+and the proof carries an issuer index without leaking which specific credential
+was used beyond that set.
+
+**Time- and role-bound credentials.** Adding expiry and role fields to the leaf
+preimage — so the leaf becomes a hash over secret, role and expiry — lets the
+circuit assert that the claimed role matches what the verifier asked for and
+that the current block time is under expiry. The user still never reveals which
+leaf they are.
+
+**Reusable across dApps.** Because the nullifier already takes a verifier id as
+input, one credential can be presented to many apps without any of them linking
+the presentations. Wrapping that into a small TypeScript SDK would let any
+Midnight dApp drop in a verify call.
 
 ## A note on a bug that mattered
 

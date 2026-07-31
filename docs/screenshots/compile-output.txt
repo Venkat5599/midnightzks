@@ -1,0 +1,26 @@
+﻿$ compact --version
+compact 0.5.1
+
+$ compact compile src/gatekeeper.compact src/managed/gatekeeper
+Compiling 4 circuits:
+
+$ ls src/managed/gatekeeper/keys src/managed/gatekeeper/zkir
+src/managed/gatekeeper/keys:
+initialize.prover
+initialize.verifier
+proveAccess.prover
+proveAccess.verifier
+register.prover
+register.verifier
+revoke.prover
+revoke.verifier
+
+src/managed/gatekeeper/zkir:
+initialize.bzkir
+initialize.zkir
+proveAccess.bzkir
+proveAccess.zkir
+register.bzkir
+register.zkir
+revoke.bzkir
+revoke.zkir
