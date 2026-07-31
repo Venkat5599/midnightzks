@@ -41,7 +41,7 @@ export const App = () => {
     <div className="page">
       <header className="masthead">
         <h1 className="wordmark">Gatekeeper</h1>
-        <span className="network">midnight · {NETWORK_ID}</span>
+        <span className="status">midnight {NETWORK_ID}</span>
       </header>
 
       <main className="main">
