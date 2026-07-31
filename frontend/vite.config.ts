@@ -1,3 +1,4 @@
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
@@ -25,7 +26,13 @@ export default defineConfig({
    */
   base: process.env.VITE_BASE ?? '/',
 
-  plugins: [react(), wasm(), topLevelAwait(), nodePolyfills({ include: ['buffer', 'process'] })],
+  plugins: [
+    react(),
+    tailwindcss(),
+    wasm(),
+    topLevelAwait(),
+    nodePolyfills({ include: ['buffer', 'process'] }),
+  ],
 
   optimizeDeps: {
     // Pre-bundling rewrites these packages in ways that break their WASM

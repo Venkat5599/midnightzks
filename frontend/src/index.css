@@ -1,0 +1,93 @@
+@import 'tailwindcss';
+
+/*
+ * Gatekeeper's design tokens.
+ *
+ * Tailwind v4 takes its theme from CSS, so this file is the design system:
+ * every colour, easing curve and font stack the components can reach for.
+ *
+ * The palette is a warm oxidised black rather than the blue-charcoal every
+ * dark product ships, and the single accent is a desaturated clay used as a
+ * value shift rather than as a highlighter.
+ */
+@theme {
+  --color-ink: #0b0a09;
+  --color-ink-2: #100e0c;
+  --color-ink-3: #16130f;
+
+  --color-hair: #241f18;
+  --color-hair-soft: #1b1712;
+  --color-line: #2b241c;
+  --color-line-lit: #6a5f52;
+
+  --color-bone: #efe9df;
+  --color-bone-2: #a99e90;
+  --color-bone-3: #6e655a;
+
+  --color-clay: #c98a58;
+  --color-clay-dim: #7b5537;
+
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Heavy, physical curves. Nothing in this project uses ease-in-out. */
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-ink);
+    color: var(--color-bone);
+    font-family: var(--font-sans);
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /*
+   * Film grain, on a fixed pointer-events-none layer so it textures the
+   * substrate without repainting on scroll and without sitting on top of
+   * anything that has to stay legible.
+   */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.16;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+  }
+
+  /* One focus treatment, applied consistently rather than per component. */
+  :focus-visible {
+    outline: 2px solid var(--color-clay);
+    outline-offset: 3px;
+  }
+}
+
+/*
+ * The traced proof path is deliberately not animated.
+ *
+ * Two implementations were tried and both were worse than nothing. Motion's
+ * `pathLength` drew the first segment and stalled on the staggered remainder
+ * for SVG `<line>`; a dash-offset sweep did not survive the Tailwind build.
+ * Both failure modes also left clay specks on the tree, because a round
+ * linecap at zero length still paints a dot.
+ *
+ * The reveal is the idea, not the sweep. The path appearing at once is
+ * legible, correct, and has no half-drawn state to get wrong.
+ */
