@@ -1,0 +1,359 @@
+/*
+ * Gatekeeper.
+ *
+ * The whole product is one idea: the gate learns a single bit about you.
+ * The page is built to say that and nothing else, so it is deliberately
+ * quiet -- one surface, one accent used as a value shift rather than a
+ * colour pop, no gradients, no glow, no decoration standing in for content.
+ */
+
+:root {
+  /* A warm near-black. Not the blue-charcoal every dark product ships. */
+  --ink: #100d0b;
+  --ink-raised: #171310;
+  --ink-line: #262019;
+
+  --bone: #ece5da;
+  --bone-dim: #a1968a;
+  --bone-faint: #6b6259;
+
+  /* The one accent, and it is a tone rather than a hue: clay, desaturated,
+     used only where the page says "admitted". */
+  --clay: #c08a63;
+
+  --measure: 34rem;
+  --step: clamp(1rem, 0.6rem + 1.6vw, 1.6rem);
+
+  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--bone);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---------------------------------------------------------------- layout */
+
+.page {
+  min-height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: calc(var(--step) * 2);
+  padding: clamp(1.5rem, 1rem + 2vw, 3rem);
+  max-width: 78rem;
+  margin-inline: auto;
+}
+
+.masthead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.wordmark {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.network {
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  color: var(--bone-faint);
+}
+
+.main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: clamp(2rem, 1rem + 5vw, 5.5rem);
+  align-items: center;
+}
+
+@media (max-width: 60rem) {
+  .main {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3rem;
+  }
+}
+
+/* ------------------------------------------------------------ the claim */
+
+.claim {
+  /* Ceiling is set by the longer of the two lines: it has to sit on one line
+     in this column, or the forced break buys nothing. */
+  font-size: clamp(1.9rem, 1.1rem + 2.5vw, 2.85rem);
+  line-height: 1.12;
+  letter-spacing: -0.028em;
+  font-weight: 600;
+  margin: 0 0 1.5rem;
+  text-wrap: balance;
+}
+
+/* The emphasis is a value shift, not a colour. */
+.claim em {
+  font-style: normal;
+  color: var(--bone-dim);
+}
+
+.lede {
+  margin: 0 0 2.25rem;
+  max-width: var(--measure);
+  color: var(--bone-dim);
+}
+
+.lede strong {
+  color: var(--bone);
+  font-weight: 500;
+}
+
+/* ----------------------------------------------------------- the control */
+
+.control {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* One action. Square-ish, solid, no pill, no glow, and it does not move on
+   hover -- the state change is tonal and the fill does the work. */
+.connect {
+  font: inherit;
+  font-weight: 550;
+  color: var(--ink);
+  background: var(--bone);
+  border: 1px solid var(--bone);
+  border-radius: 3px;
+  padding: 0.7rem 1.35rem;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease;
+}
+
+.connect:hover:not(:disabled) {
+  background: var(--clay);
+  border-color: var(--clay);
+}
+
+.connect:disabled {
+  background: transparent;
+  color: var(--bone-faint);
+  border-color: var(--ink-line);
+  cursor: progress;
+}
+
+.connect:focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 3px;
+}
+
+.disconnect {
+  font: inherit;
+  font-size: 0.9375rem;
+  color: var(--bone-dim);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--ink-line);
+  border-radius: 0;
+  padding: 0.2rem 0;
+  cursor: pointer;
+  transition: color 140ms ease;
+}
+
+.disconnect:hover {
+  color: var(--bone);
+}
+
+.disconnect:focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 3px;
+}
+
+/* --------------------------------------------------------------- session */
+
+.session {
+  margin-top: 2rem;
+  border-top: 1px solid var(--ink-line);
+  padding-top: 1.25rem;
+  display: grid;
+  gap: 0.75rem;
+  max-width: var(--measure);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 8.5rem minmax(0, 1fr);
+  gap: 1rem;
+  align-items: baseline;
+}
+
+@media (max-width: 34rem) {
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.15rem;
+  }
+}
+
+.row dt {
+  font-size: 0.8125rem;
+  color: var(--bone-faint);
+}
+
+.row dd {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  word-break: break-all;
+  color: var(--bone);
+}
+
+.note {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--bone-dim);
+  max-width: var(--measure);
+}
+
+.error {
+  margin: 1.25rem 0 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--ink-line);
+  border-left: 2px solid var(--clay);
+  border-radius: 2px;
+  background: var(--ink-raised);
+  color: var(--bone);
+  font-size: 0.9375rem;
+  max-width: var(--measure);
+}
+
+.error a {
+  color: var(--clay);
+}
+
+/* ------------------------------------------------------------- the plate */
+
+/*
+ * The signature artifact: the allowlist, drawn honestly.
+ *
+ * Sixteen commitments sit in a row and fold upward to a single root. One
+ * proof is in flight -- the plate shows that something is being proved
+ * without showing which leaf it came from, which is exactly what an observer
+ * of the chain sees. The marks are painted at full opacity by default; the
+ * animation only modulates within a legible range, so nothing here depends
+ * on motion actually running.
+ */
+.plate {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Empty slots. Present in the tree, holding nothing. */
+.leaf {
+  fill: none;
+  stroke: #3a3128;
+  stroke-width: 1;
+}
+
+/* Occupied slots. Which of them is proving right now is exactly the thing
+   this drawing will not tell you. */
+.leaf-live {
+  stroke: var(--bone-dim);
+  fill: #1d1814;
+  animation: breathe 5.5s ease-in-out infinite;
+}
+
+.leaf-live:nth-of-type(3n) {
+  animation-delay: -1.8s;
+}
+
+.leaf-live:nth-of-type(3n + 1) {
+  animation-delay: -3.4s;
+}
+
+.edge {
+  stroke: #332b23;
+  stroke-width: 1;
+  fill: none;
+}
+
+.root-mark {
+  fill: none;
+  stroke: var(--clay);
+  stroke-width: 1.25;
+}
+
+.plate-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  fill: var(--bone-faint);
+  letter-spacing: 0.04em;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leaf-live {
+    animation: none;
+    opacity: 0.85;
+  }
+}
+
+/* -------------------------------------------------------------- colophon */
+
+.colophon {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--ink-line);
+  padding-top: 1.25rem;
+  font-size: 0.875rem;
+  color: var(--bone-faint);
+}
+
+.colophon a {
+  color: var(--bone-dim);
+  text-decoration: none;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.colophon a:hover {
+  color: var(--bone);
+}
+
+.colophon code {
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  word-break: break-all;
+}

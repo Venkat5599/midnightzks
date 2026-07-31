@@ -7,8 +7,14 @@
  * before a wallet is connected and if the wallet reports nothing.
  */
 
-/** Preprod ("testnet") is the network these defaults point at. */
-export const NETWORK_ID: string = import.meta.env.VITE_NETWORK_ID ?? 'testnet';
+/**
+ * The network this dApp expects to be on.
+ *
+ * Must match what `deploy/` targeted, and must match what the connected wallet
+ * reports: `lib/lace.ts` refuses a session whose `networkId` differs, rather
+ * than letting anyone sign against the wrong chain by accident.
+ */
+export const NETWORK_ID: string = import.meta.env.VITE_NETWORK_ID ?? 'preview';
 
 export const FALLBACK_INDEXER_URI: string =
   import.meta.env.VITE_INDEXER_URI ?? 'https://indexer.preprod.midnight.network/api/v3/graphql';
