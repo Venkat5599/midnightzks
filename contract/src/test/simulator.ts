@@ -11,8 +11,8 @@ import {
   ledger,
   pureCircuits,
 } from '../managed/trien/contract/index.js';
-import { createPrivateState, type TrienPrivateState } from '../types.js';
-import { witnesses } from '../witnesses.js';
+import { createPrivateState, type TrienPrivateState } from '../types.ts';
+import { witnesses } from '../witnesses.ts';
 
 /** Deterministic 32-byte value, so failures are reproducible. */
 export const bytes32 = (label: string): Uint8Array => {

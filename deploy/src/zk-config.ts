@@ -28,8 +28,15 @@ export const MANAGED_DIR = resolve(here, '..', '..', 'contract', 'src', 'managed
  * `.zkir` next to it is committed for reviewers and is not used here.
  */
 export class NodeZKConfigProvider<K extends string> extends ZKConfigProvider<K> {
-  constructor(private readonly baseDir: string = MANAGED_DIR) {
+  // Declared and assigned rather than written as a constructor parameter
+  // property. Node runs these files in strip-only mode, which erases types but
+  // will not synthesise the field a parameter property implies, so it rejects
+  // that syntax outright.
+  private readonly baseDir: string;
+
+  constructor(baseDir: string = MANAGED_DIR) {
     super();
+    this.baseDir = baseDir;
   }
 
   private read(...segments: string[]): Promise<Uint8Array> {

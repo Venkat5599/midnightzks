@@ -1,6 +1,6 @@
 import type { WitnessContext } from '@midnight-ntwrk/compact-runtime';
 import { type Ledger, pureCircuits } from './managed/trien/contract/index.js';
-import type { TrienPrivateState } from './types.js';
+import type { TrienPrivateState } from './types.ts';
 
 /**
  * Witness implementations.

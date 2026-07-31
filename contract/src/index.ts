@@ -19,9 +19,9 @@ export {
   type Witnesses,
 } from './managed/trien/contract/index.js';
 
-export { witnesses, type TrienWitnesses } from './witnesses.js';
+export { witnesses, type TrienWitnesses } from './witnesses.ts';
 
-export { createPrivateState, randomPrivateState, type TrienPrivateState } from './types.js';
+export { createPrivateState, randomPrivateState, type TrienPrivateState } from './types.ts';
 
 /**
  * The circuits this contract exposes, as the identifiers midnight-js uses to
