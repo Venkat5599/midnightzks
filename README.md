@@ -3,11 +3,11 @@
 **Anonymous, revocable allowlist access on Midnight.**
 
 [![CI](https://github.com/Venkat5599/mn/actions/workflows/ci.yml/badge.svg)](https://github.com/Venkat5599/mn/actions/workflows/ci.yml)
-[![Deploy](https://github.com/Venkat5599/mn/actions/workflows/deploy.yml/badge.svg)](https://github.com/Venkat5599/mn/actions/workflows/deploy.yml)
+[![Vercel](https://img.shields.io/badge/deploy-vercel-000?logo=vercel)](https://midnight-rust-psi.vercel.app)
 
 | | |
 | --- | --- |
-| Live dApp | https://kageai.me/mn/ |
+| Live dApp | https://midnight-rust-psi.vercel.app |
 | Network | Midnight Preview |
 | Contract address | _see [Deployment](#deployment)_ |
 | Source | https://github.com/Venkat5599/mn |
@@ -156,7 +156,7 @@ frontend/
   src/Plate.tsx                   the allowlist, drawn
   src/lib/lace.ts                 wallet connect / disconnect
 .github/workflows/ci.yml          compile + typecheck + test on every push
-.github/workflows/deploy.yml      publishes the dApp to GitHub Pages
+vercel.json                       build config for the deployed dApp
 ```
 
 ## Running it locally
@@ -282,8 +282,8 @@ each of the three things revocation has to do.
 
 The page does one thing, because the product is one thing. It connects Lace,
 reports what the wallet told it, and says plainly what that does and does not
-reveal. Live at **https://kageai.me/mn/**, published by CI on every push to
-`master`.
+reveal. Live at **https://midnight-rust-psi.vercel.app**, redeployed by Vercel
+on every push to `master`.
 
 Connect and disconnect are honest about their limits. The DApp connector API
 has no revoke method — permission lives in the extension, and only the user can

@@ -17,11 +17,11 @@
 export const NETWORK_ID: string = import.meta.env.VITE_NETWORK_ID ?? 'preview';
 
 export const FALLBACK_INDEXER_URI: string =
-  import.meta.env.VITE_INDEXER_URI ?? 'https://indexer.preprod.midnight.network/api/v3/graphql';
+  import.meta.env.VITE_INDEXER_URI ?? 'https://indexer.preview.midnight.network/api/v3/graphql';
 
 export const FALLBACK_INDEXER_WS_URI: string =
   import.meta.env.VITE_INDEXER_WS_URI ??
-  'wss://indexer.preprod.midnight.network/api/v3/graphql/ws';
+  'wss://indexer.preview.midnight.network/api/v3/graphql/ws';
 
 /**
  * Proving runs locally by default. Sending a witness to someone else's proof

@@ -33,7 +33,7 @@ export const actor = (label: string): { state: GatekeeperPrivateState; commitmen
  *
  * This is the same interpreter the chain uses, minus proof generation, so
  * every `assert` in the Compact source fires here exactly as it would on
- * Preprod. That is what makes these tests meaningful rather than decorative.
+ * chain. That is what makes these tests meaningful rather than decorative.
  *
  * The simulator holds one shared ledger and lets each call supply its own
  * private state, which is how it can model an operator and several mutually

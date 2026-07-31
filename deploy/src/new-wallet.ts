@@ -14,7 +14,7 @@ import {
 } from './config.ts';
 
 /**
- * Create (or reuse) a throwaway Preprod wallet and print its public addresses.
+ * Create (or reuse) a throwaway Preview wallet and print its public addresses.
  *
  * The seed is generated here and written to deploy/.env, which is gitignored.
  * Nothing in this script prints the seed: the whole point is that the address
@@ -55,7 +55,7 @@ const main = async (): Promise<void> => {
     console.log('');
     console.log('  Balances          ', JSON.stringify(state.balances));
     console.log('');
-    console.log('Fund the address above from the Preprod faucet, then run "npm run deploy".');
+    console.log('Fund the address above from the faucet, then run "npm run deploy".');
   } finally {
     await wallet.close();
   }

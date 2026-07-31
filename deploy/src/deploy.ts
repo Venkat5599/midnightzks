@@ -9,7 +9,7 @@ const hex = (bytes: Uint8Array): string =>
   Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 
 /**
- * Deploy the Gatekeeper registry to Preprod and bind it to an operator.
+ * Deploy the Gatekeeper registry and bind it to an operator.
  *
  * Two transactions, because they are two different things. Deployment puts the
  * circuits and an empty ledger on chain; `initialize` then writes the operator

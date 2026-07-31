@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-/** Where the throwaway Preprod seed lives. Gitignored — never committed. */
+/** Where the throwaway Preview seed lives. Gitignored — never committed. */
 export const ENV_PATH = resolve(here, '..', '.env');
 
 /** Where the resulting contract address is recorded. Committed; not secret. */
@@ -107,7 +107,7 @@ export const writeSeed = (seed: string): void => {
   writeFileSync(
     ENV_PATH,
     [
-      '# Throwaway Preprod seed for deploying the Gatekeeper registry.',
+      '# Throwaway Preview seed for deploying the Gatekeeper registry.',
       '# Faucet funds only. This file is gitignored; do not commit it, and do',
       '# not reuse this seed for anything that holds real value.',
       `GATEKEEPER_SEED=${seed}`,

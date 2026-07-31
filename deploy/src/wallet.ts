@@ -71,7 +71,7 @@ export const awaitFunds = async (wallet: Wallet, timeoutMs = 300_000): Promise<b
         with: () => {
           throw new Error(
             'Timed out waiting for funds. Run "npm run address", fund that address from the ' +
-              'Preprod faucet, then try again.',
+              'faucet, then try again.',
           );
         },
       }),
