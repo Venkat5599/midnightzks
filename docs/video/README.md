@@ -39,11 +39,16 @@ A run that covers Level 2, in order:
 Step 5 needs a funded wallet. Until then the contract address is `Pending`,
 which the challenge explicitly allows.
 
-## Keeping the repo lean
+## The recording
 
-`.gitignore` excludes video files in this directory by default. Commit a link,
-or force-add a small file deliberately:
+`trien-demo.mp4` is a one-minute capture of the live site: the masthead, the
+instrument running, and the hold-to-reveal firing three times, each tracing a
+different leaf up to the root while the caption flips between the public view
+and the one the chain never gets.
 
-```bash
-git add -f docs/video/demo.mp4
-```
+It does **not** show wallet connect or a circuit call, because it was captured
+from an automated browser with no Lace extension and against a registry that is
+not yet deployed. Those two shots are what the Level 2 recording still needs.
+
+Recordings are committed here rather than ignored, so the demo travels with the
+repository.
