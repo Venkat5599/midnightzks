@@ -12,7 +12,16 @@ export const ENV_PATH = resolve(here, '..', '.env');
 /** Where the resulting contract address is recorded. Committed; not secret. */
 export const DEPLOYMENT_PATH = resolve(here, '..', 'deployment.json');
 
-export const NETWORK_ID = process.env.NETWORK_ID ?? 'testnet';
+/**
+ * Which public network to deploy against.
+ *
+ * Preview rather than Preprod, for a boring operational reason: at the time of
+ * writing the Preprod faucet reports
+ * `{"status":"NOT_SERVING","reason":"SYNC_STUCK_RECOVERY"}` and hands out
+ * nothing, so a contract cannot be deployed there at all. Preview's faucet is
+ * serving. Both are accepted. Override with `NETWORK_ID` if that flips back.
+ */
+export const NETWORK_ID = process.env.NETWORK_ID ?? 'preview';
 
 /**
  * The same network, as the enum the Zswap wallet expects.
@@ -23,8 +32,11 @@ export const NETWORK_ID = process.env.NETWORK_ID ?? 'testnet';
  */
 export const ZSWAP_NETWORK_ID: ZswapNetworkId = ((): ZswapNetworkId => {
   switch (NETWORK_ID.toLowerCase()) {
+    // Preview and Preprod are both public test networks, and the wallet SDK
+    // has one enum member for that whole category.
     case 'testnet':
     case 'preprod':
+    case 'preview':
       return ZswapNetworkId.TestNet;
     case 'devnet':
       return ZswapNetworkId.DevNet;
@@ -37,15 +49,37 @@ export const ZSWAP_NETWORK_ID: ZswapNetworkId = ((): ZswapNetworkId => {
   }
 })();
 
+/**
+ * Preview service endpoints.
+ *
+ * These are versioned and they move. The `testnet-02` hosts this repo started
+ * with no longer resolve at all, and the indexer's GraphQL path is now
+ * `/api/v3/graphql` — `/api/v1` returns 404. A wrong host here fails quietly:
+ * the wallet still builds and still reports a correct address, because the
+ * address is derived locally from the seed, and simply never syncs. The symptom
+ * looks like an empty wallet rather than a bad URL, which is why these are
+ * pinned here with a comment instead of being scattered through the scripts.
+ */
 export const INDEXER_URI =
-  process.env.INDEXER_URI ?? 'https://indexer.testnet-02.midnight.network/api/v1/graphql';
+  process.env.INDEXER_URI ?? 'https://indexer.preview.midnight.network/api/v3/graphql';
 
 export const INDEXER_WS_URI =
-  process.env.INDEXER_WS_URI ?? 'wss://indexer.testnet-02.midnight.network/api/v1/graphql/ws';
+  process.env.INDEXER_WS_URI ?? 'wss://indexer.preview.midnight.network/api/v3/graphql/ws';
 
-export const NODE_URI = process.env.NODE_URI ?? 'https://rpc.testnet-02.midnight.network';
+export const NODE_URI = process.env.NODE_URI ?? 'https://rpc.preview.midnight.network';
 
 export const PROOF_SERVER_URI = process.env.PROOF_SERVER_URI ?? 'http://localhost:6300';
+
+/**
+ * Key under which this contract's private state is stored.
+ *
+ * Must match the value the dApp uses (`frontend/src/config.ts`), or the two
+ * would go looking for the operator's secret in different places.
+ */
+export const PRIVATE_STATE_ID = 'gatekeeper';
+
+/** Name of the local LevelDB store holding private state. */
+export const PRIVATE_STATE_STORE = 'gatekeeper-private-state';
 
 /**
  * Read `KEY=value` pairs out of deploy/.env.
