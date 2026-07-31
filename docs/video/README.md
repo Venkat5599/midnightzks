@@ -6,9 +6,9 @@ than a few megabytes, host it and commit only the link.
 
 | | |
 | --- | --- |
-| Level 2 demo | _pending_ |
-| Level 3 demo | _pending_ |
-| Level 4 demo | _pending_ |
+| Level 2 demo | https://youtu.be/5gKaCGEMLYc |
+| Level 3 demo | https://youtu.be/5gKaCGEMLYc |
+| Level 4 demo | https://youtu.be/5gKaCGEMLYc |
 
 ## What each level asks for
 
