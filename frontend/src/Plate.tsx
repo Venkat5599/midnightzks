@@ -166,9 +166,9 @@ export const Plate = () => {
                   strokeWidth={1}
                   className={
                     isSource
-                      ? 'fill-[#2a1a0f] stroke-clay'
+                      ? 'fill-[#2e2e2e] stroke-clay'
                       : occupied
-                        ? 'fill-[#171310] stroke-line-lit'
+                        ? 'fill-[#171717] stroke-line-lit'
                         : 'fill-none stroke-line'
                   }
                 />
@@ -180,7 +180,7 @@ export const Plate = () => {
               key={`root-${proof?.id}`}
               cx={W / 2}
               cy={ROOT_Y}
-              className="fill-[#14110e] stroke-line-lit"
+              className="fill-[#141414] stroke-line-lit"
               strokeWidth={1.25}
               initial={{ r: 8 }}
               animate={reduced ? { r: 8 } : { r: [8, 11, 8] }}

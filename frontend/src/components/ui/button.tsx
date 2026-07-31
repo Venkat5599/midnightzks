@@ -26,7 +26,7 @@ const buttonVariants = cva(
       variant: {
         /* The single primary action on the page. */
         solid:
-          'rounded-[4px] bg-bone text-[#17120d] tracking-[-0.006em] ' +
+          'rounded-[4px] bg-bone text-[#0a0a0a] tracking-[-0.006em] ' +
           'hover:bg-clay active:scale-[0.985] ' +
           'disabled:bg-transparent disabled:text-bone-3 disabled:shadow-[inset_0_0_0_1px_var(--color-hair)]',
         /* Secondary, quiet enough not to compete with the primary. */

@@ -11,21 +11,34 @@
  * value shift rather than as a highlighter.
  */
 @theme {
-  --color-ink: #0b0a09;
-  --color-ink-2: #100e0c;
-  --color-ink-3: #16130f;
+  /*
+   * Monochrome. Every hue is gone, so hierarchy is carried entirely by value.
+   *
+   * Not pure #000 for surfaces: it flattens depth and makes the grain layer
+   * read as dirt rather than texture. The extremes are held in reserve so the
+   * accent has somewhere brighter to go.
+   */
+  --color-ink: #0a0a0a;
+  --color-ink-2: #0f0f0f;
+  --color-ink-3: #151515;
 
-  --color-hair: #241f18;
-  --color-hair-soft: #1b1712;
-  --color-line: #2b241c;
-  --color-line-lit: #6a5f52;
+  --color-hair: #262626;
+  --color-hair-soft: #1b1b1b;
+  --color-line: #2c2c2c;
+  --color-line-lit: #6b6b6b;
 
-  --color-bone: #efe9df;
-  --color-bone-2: #a99e90;
-  --color-bone-3: #6e655a;
+  --color-bone: #e6e6e6;
+  --color-bone-2: #a1a1a1;
+  --color-bone-3: #6b6b6b;
 
-  --color-clay: #c98a58;
-  --color-clay-dim: #7b5537;
+  /*
+   * The accent with its hue removed. It was clay; now it is simply the
+   * brightest value on the page, which is the only way an accent can work
+   * without colour. `clay-dim` stays a step below so the two never flatten
+   * into each other.
+   */
+  --color-clay: #ffffff;
+  --color-clay-dim: #8f8f8f;
 
   --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
