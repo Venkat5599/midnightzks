@@ -252,7 +252,27 @@ The result is recorded in `deploy/deployment.json`:
 }
 ```
 
-![deployed contract](docs/screenshots/deployed.png)
+### Why the address still says Pending
+
+The pipeline above runs end to end up to the point of needing money, and the
+faucet is where it stops. Both public networks refuse, for different reasons.
+
+**Preprod** returns `{"status":"NOT_SERVING","reason":"SYNC_STUCK_RECOVERY"}`
+from its health endpoint and dispenses nothing at all, which is why this project
+targets Preview instead.
+
+**Preview** is serving, but rejects the address this SDK generates:
+`POST /api/drips` answers `400 {"error":"Provided address is invalid"}`. The
+shielded `mn_shield-addr_test1…` form was tried, along with the `_dev1`,
+`_undeployed1` and legacy `coinPublicKey|encryptionPublicKey` variants. Deriving
+the unshielded Night address does not help either: `signatureVerifyingKey()`
+wants a serialised `SigningKey` and rejects raw HD-derived bytes. Every
+`@midnight-ntwrk` package here is already at its latest published version, so
+there is no upgrade to reach for.
+
+The practical route is Lace: fund a Lace wallet on Preview, then forward tNight
+to the address `npm run address` prints. The moment it has a balance,
+`npm run deploy` completes and the address lands in `deployment.json`.
 
 A note on networks, because it cost real time: the `testnet-02` endpoints this
 project started against no longer resolve, and the indexer's GraphQL path moved
@@ -312,15 +332,15 @@ accident.
 - [x] Screenshot of successful compile output
 - [x] README section explaining public state vs private witness
 - [x] Initial product idea paragraph
-- [x] Minimum 5 meaningful commits
+- [x] Minimum 5 meaningful commits (25)
 
 **Level 2 — Waxing Crescent**
 
 - [x] Lace wallet connect / disconnect implemented
 - [x] Live demo link
 - [x] README documenting the privacy claim
-- [x] Minimum 8 meaningful commits
-- [ ] Deployed contract with a verifiable address — blocked, see [Deployment](#deployment)
+- [x] Minimum 8 meaningful commits (25)
+- [ ] Deployed contract with a verifiable address — blocked, see [why](#why-the-address-still-says-pending)
 - [x] Demo video: wallet connect + a successful circuit call — [https://youtu.be/5gKaCGEMLYc](https://youtu.be/5gKaCGEMLYc)
 
 **Level 3 — First Quarter**
@@ -329,7 +349,7 @@ accident.
 - [x] 3+ tests passing (14)
 - [x] CI/CD pipeline running, with badges above
 - [x] README "privacy model" section: what an observer can and cannot learn
-- [x] Minimum 10 meaningful commits
+- [x] Minimum 10 meaningful commits (25)
 - [x] Demo video (1 minute) showing full functionality — [https://youtu.be/5gKaCGEMLYc](https://youtu.be/5gKaCGEMLYc)
 
 **Level 4 — Waxing Gibbous**
@@ -337,16 +357,14 @@ accident.
 - [x] MVP live
 - [x] Documentation: README, setup, usage
 - [x] CI/CD running on the product repo
-- [x] Minimum 15 meaningful commits
-- [ ] Verifiable contract address — blocked, see [Deployment](#deployment)
+- [x] Minimum 15 meaningful commits (25)
+- [ ] Verifiable contract address — blocked, see [why](#why-the-address-still-says-pending)
 - [x] Product X profile, linked here: [@Auditflow5599](https://x.com/Auditflow5599)
 - [x] Demo video of the MVP — [https://youtu.be/5gKaCGEMLYc](https://youtu.be/5gKaCGEMLYc)
 
-Two of the unticked items cannot be produced from a repository at all: a screen
-recording and a social profile. The third is a live blocker rather than
-unfinished work — the deployment pipeline is written and runs end to end up to
-the point of needing funds, and the faucet is the thing in the way. See
-[Deployment](#deployment).
+Only the contract address is outstanding, and it is a live blocker rather than
+unfinished work: the deployment pipeline is written and runs end to end up to
+the point of needing funds. See [Why the address still says Pending](#why-the-address-still-says-pending).
 
 ## Where this goes next
 
