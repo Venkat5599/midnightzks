@@ -24,3 +24,9 @@ Plans/
 .DS_Store
 
 .vercel
+
+# Recordings. Host them and commit the link; force-add if a small file must live here.
+docs/video/*.mp4
+docs/video/*.mov
+docs/video/*.webm
+docs/video/*.gif

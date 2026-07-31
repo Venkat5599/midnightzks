@@ -319,7 +319,7 @@ accident.
 - [x] README documenting the privacy claim
 - [x] Minimum 8 meaningful commits
 - [ ] Deployed contract with a verifiable address — blocked, see [Deployment](#deployment)
-- [ ] Demo video: wallet connect + a successful circuit call
+- [ ] Demo video: wallet connect + a successful circuit call — see [docs/video](docs/video/)
 
 **Level 3 — First Quarter**
 
@@ -328,7 +328,7 @@ accident.
 - [x] CI/CD pipeline running, with badges above
 - [x] README "privacy model" section: what an observer can and cannot learn
 - [x] Minimum 10 meaningful commits
-- [ ] Demo video (1 minute) showing full functionality
+- [ ] Demo video (1 minute) showing full functionality — see [docs/video](docs/video/)
 
 **Level 4 — Waxing Gibbous**
 
@@ -338,7 +338,7 @@ accident.
 - [x] Minimum 15 meaningful commits
 - [ ] Verifiable contract address — blocked, see [Deployment](#deployment)
 - [ ] Product X profile, linked here
-- [ ] Demo video of the MVP
+- [ ] Demo video of the MVP — see [docs/video](docs/video/)
 
 Two of the unticked items cannot be produced from a repository at all: a screen
 recording and a social profile. The third is a live blocker rather than
