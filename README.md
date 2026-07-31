@@ -11,6 +11,7 @@
 | Network | Midnight Preview |
 | Contract address | **Pending** — see [Deployment](#deployment) |
 | Source | https://github.com/Venkat5599/mn |
+| Follow | [@Auditflow5599](https://x.com/Auditflow5599) |
 
 An operator issues credentials to approved people. Those people prove they are
 on the list — to a newsroom, a clinic, a support forum, a beta programme —
@@ -337,7 +338,7 @@ accident.
 - [x] CI/CD running on the product repo
 - [x] Minimum 15 meaningful commits
 - [ ] Verifiable contract address — blocked, see [Deployment](#deployment)
-- [ ] Product X profile, linked here
+- [x] Product X profile, linked here: [@Auditflow5599](https://x.com/Auditflow5599)
 - [ ] Demo video of the MVP — see [docs/video](docs/video/)
 
 Two of the unticked items cannot be produced from a repository at all: a screen
