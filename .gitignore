@@ -11,6 +11,13 @@ out/
 contract/src/managed/**/keys/*.prover
 contract/src/managed/**/zkir/*.bzkir
 
+# TypeScript incremental build state.
+*.tsbuildinfo
+
+# Working notes for an in-progress change. Not a deliverable.
+Plans/
+
+# Holds the deploy wallet seed. Never commit this.
 .env
 .env.local
 *.log

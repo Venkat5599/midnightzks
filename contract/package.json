@@ -3,21 +3,17 @@
   "version": "0.1.0",
   "description": "Compact contract for Gatekeeper: anonymous, revocable allowlist access on Midnight",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
+    ".": "./src/index.ts",
     "./managed": {
       "types": "./src/managed/gatekeeper/contract/index.d.ts",
       "default": "./src/managed/gatekeeper/contract/index.js"
     }
   },
   "files": [
-    "dist",
-    "src/managed"
+    "src"
   ],
   "scripts": {
     "compact": "compact compile src/gatekeeper.compact src/managed/gatekeeper",
