@@ -17,6 +17,14 @@ import wasm from 'vite-plugin-wasm';
  * on first import, so they are not optional conveniences.
  */
 export default defineConfig({
+  /*
+   * GitHub Pages serves this project from /mn/, not from the domain root.
+   * Left at the default, Vite emits root-absolute asset URLs that 404 there
+   * and the page renders blank -- with a green build, which is the annoying
+   * part. Local dev and preview keep the root base.
+   */
+  base: process.env.VITE_BASE ?? '/',
+
   plugins: [react(), wasm(), topLevelAwait(), nodePolyfills({ include: ['buffer', 'process'] })],
 
   optimizeDeps: {

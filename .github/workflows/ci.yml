@@ -54,8 +54,26 @@ jobs:
         working-directory: contract
         run: npm test
 
-# A `frontend` job belongs here too, and returns in the next cycle. It is
-# deliberately absent for now: the dApp is still only its wallet-connector and
-# configuration modules, with no entry point to build, so the job could only
-# ever fail. A pipeline that is red for a known, uninteresting reason has
-# stopped being a signal, and the contract job above is the one that must hold.
+  frontend:
+    name: Typecheck and build the dApp
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: Build
+        working-directory: frontend
+        run: npm run build
