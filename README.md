@@ -9,7 +9,7 @@
 | --- | --- |
 | Live dApp | https://midnight-rust-psi.vercel.app |
 | Network | Midnight Preview |
-| Contract address | _see [Deployment](#deployment)_ |
+| Contract address | **Pending** — see [Deployment](#deployment) |
 | Source | https://github.com/Venkat5599/mn |
 
 An operator issues credentials to approved people. Those people prove they are
@@ -278,7 +278,12 @@ each of the three things revocation has to do.
 
 ## The dApp
 
-![the dApp](docs/screenshots/dapp.png)
+![the dApp — the public view](docs/screenshots/dapp.jpg)
+
+Holding "reveal what happened" traces the proof back to the leaf it came from —
+the view the chain never gets:
+
+![the dApp — revealed](docs/screenshots/dapp-revealed.jpg)
 
 The page does one thing, because the product is one thing. It connects Lace,
 reports what the wallet told it, and says plainly what that does and does not
