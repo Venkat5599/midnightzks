@@ -175,7 +175,7 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('initialize',
                                      'argument 1 (as invoked from Typescript)',
-                                     'gatekeeper.compact line 86 char 1',
+                                     'trien.compact line 86 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
@@ -199,14 +199,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('register',
                                      'argument 1 (as invoked from Typescript)',
-                                     'gatekeeper.compact line 99 char 1',
+                                     'trien.compact line 99 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(commitment_0.buffer instanceof ArrayBuffer && commitment_0.BYTES_PER_ELEMENT === 1 && commitment_0.length === 32)) {
           __compactRuntime.typeError('register',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'gatekeeper.compact line 99 char 1',
+                                     'trien.compact line 99 char 1',
                                      'Bytes<32>',
                                      commitment_0)
         }
@@ -235,14 +235,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('revoke',
                                      'argument 1 (as invoked from Typescript)',
-                                     'gatekeeper.compact line 114 char 1',
+                                     'trien.compact line 114 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(index_0) === 'bigint' && index_0 >= 0n && index_0 <= 18446744073709551615n)) {
           __compactRuntime.typeError('revoke',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'gatekeeper.compact line 114 char 1',
+                                     'trien.compact line 114 char 1',
                                      'Uint<0..18446744073709551616>',
                                      index_0)
         }
@@ -269,14 +269,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('proveAccess',
                                      'argument 1 (as invoked from Typescript)',
-                                     'gatekeeper.compact line 132 char 1',
+                                     'trien.compact line 132 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(verifierId_0.buffer instanceof ArrayBuffer && verifierId_0.BYTES_PER_ELEMENT === 1 && verifierId_0.length === 32)) {
           __compactRuntime.typeError('proveAccess',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'gatekeeper.compact line 132 char 1',
+                                     'trien.compact line 132 char 1',
                                      'Bytes<32>',
                                      verifierId_0)
         }
@@ -471,7 +471,7 @@ export class Contract {
     if (!(result_0.buffer instanceof ArrayBuffer && result_0.BYTES_PER_ELEMENT === 1 && result_0.length === 32)) {
       __compactRuntime.typeError('memberSecret',
                                  'return value',
-                                 'gatekeeper.compact line 40 char 1',
+                                 'trien.compact line 40 char 1',
                                  'Bytes<32>',
                                  result_0)
     }
@@ -488,7 +488,7 @@ export class Contract {
     if (!(typeof(result_0) === 'object' && result_0.leaf.buffer instanceof ArrayBuffer && result_0.leaf.BYTES_PER_ELEMENT === 1 && result_0.leaf.length === 32 && Array.isArray(result_0.path) && result_0.path.length === 10 && result_0.path.every((t) => typeof(t) === 'object' && typeof(t.sibling) === 'object' && typeof(t.sibling.field) === 'bigint' && t.sibling.field >= 0 && t.sibling.field <= __compactRuntime.MAX_FIELD && typeof(t.goes_left) === 'boolean'))) {
       __compactRuntime.typeError('memberPath',
                                  'return value',
-                                 'gatekeeper.compact line 44 char 1',
+                                 'trien.compact line 44 char 1',
                                  'struct MerkleTreePath<leaf: Bytes<32>, path: Vector<10, struct MerkleTreePathEntry<sibling: struct MerkleTreeDigest<field: Field>, goes_left: Boolean>>>',
                                  result_0)
     }
@@ -901,7 +901,7 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(rt_0) === 'object' && typeof(rt_0.field) === 'bigint' && rt_0.field >= 0 && rt_0.field <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('checkRoot',
                                      'argument 1',
-                                     'gatekeeper.compact line 16 char 1',
+                                     'trien.compact line 16 char 1',
                                      'struct MerkleTreeDigest<field: Field>',
                                      rt_0)
         }
@@ -951,14 +951,14 @@ export function ledger(stateOrChargedState) {
         if (!(typeof(index_0) === 'bigint' && index_0 >= 0 && index_0 <= __compactRuntime.MAX_FIELD)) {
           __compactRuntime.typeError('path_for_leaf',
                                      'argument 1',
-                                     'gatekeeper.compact line 16 char 1',
+                                     'trien.compact line 16 char 1',
                                      'Field',
                                      index_0)
         }
         if (!(leaf_0.buffer instanceof ArrayBuffer && leaf_0.BYTES_PER_ELEMENT === 1 && leaf_0.length === 32)) {
           __compactRuntime.typeError('path_for_leaf',
                                      'argument 2',
-                                     'gatekeeper.compact line 16 char 1',
+                                     'trien.compact line 16 char 1',
                                      'Bytes<32>',
                                      leaf_0)
         }
@@ -973,7 +973,7 @@ export function ledger(stateOrChargedState) {
         if (!(leaf_0.buffer instanceof ArrayBuffer && leaf_0.BYTES_PER_ELEMENT === 1 && leaf_0.length === 32)) {
           __compactRuntime.typeError('find_path_for_leaf',
                                      'argument 1',
-                                     'gatekeeper.compact line 16 char 1',
+                                     'trien.compact line 16 char 1',
                                      'Bytes<32>',
                                      leaf_0)
         }
@@ -1037,7 +1037,7 @@ export function ledger(stateOrChargedState) {
         if (!(elem_0.buffer instanceof ArrayBuffer && elem_0.BYTES_PER_ELEMENT === 1 && elem_0.length === 32)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'gatekeeper.compact line 20 char 1',
+                                     'trien.compact line 20 char 1',
                                      'Bytes<32>',
                                      elem_0)
         }
@@ -1125,7 +1125,7 @@ export const pureCircuits = {
     if (!(secret_0.buffer instanceof ArrayBuffer && secret_0.BYTES_PER_ELEMENT === 1 && secret_0.length === 32)) {
       __compactRuntime.typeError('commitmentOf',
                                  'argument 1',
-                                 'gatekeeper.compact line 51 char 1',
+                                 'trien.compact line 51 char 1',
                                  'Bytes<32>',
                                  secret_0)
     }
@@ -1141,21 +1141,21 @@ export const pureCircuits = {
     if (!(secret_0.buffer instanceof ArrayBuffer && secret_0.BYTES_PER_ELEMENT === 1 && secret_0.length === 32)) {
       __compactRuntime.typeError('nullifierOf',
                                  'argument 1',
-                                 'gatekeeper.compact line 68 char 1',
+                                 'trien.compact line 68 char 1',
                                  'Bytes<32>',
                                  secret_0)
     }
     if (!(verifierId_0.buffer instanceof ArrayBuffer && verifierId_0.BYTES_PER_ELEMENT === 1 && verifierId_0.length === 32)) {
       __compactRuntime.typeError('nullifierOf',
                                  'argument 2',
-                                 'gatekeeper.compact line 68 char 1',
+                                 'trien.compact line 68 char 1',
                                  'Bytes<32>',
                                  verifierId_0)
     }
     if (!(typeof(currentEpoch_0) === 'bigint' && currentEpoch_0 >= 0n && currentEpoch_0 <= 18446744073709551615n)) {
       __compactRuntime.typeError('nullifierOf',
                                  'argument 3',
-                                 'gatekeeper.compact line 68 char 1',
+                                 'trien.compact line 68 char 1',
                                  'Uint<0..18446744073709551616>',
                                  currentEpoch_0)
     }

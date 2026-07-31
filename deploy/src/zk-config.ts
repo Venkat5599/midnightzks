@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 
 /** Where `compact compile` wrote its output. */
-export const MANAGED_DIR = resolve(here, '..', '..', 'contract', 'src', 'managed', 'gatekeeper');
+export const MANAGED_DIR = resolve(here, '..', '..', 'contract', 'src', 'managed', 'trien');
 
 /**
  * Serves the compiled ZK artifacts off the local filesystem.

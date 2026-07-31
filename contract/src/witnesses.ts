@@ -1,6 +1,6 @@
 import type { WitnessContext } from '@midnight-ntwrk/compact-runtime';
-import { type Ledger, pureCircuits } from './managed/gatekeeper/contract/index.js';
-import type { GatekeeperPrivateState } from './types.js';
+import { type Ledger, pureCircuits } from './managed/trien/contract/index.js';
+import type { TrienPrivateState } from './types.js';
 
 /**
  * Witness implementations.
@@ -20,7 +20,7 @@ export const witnesses = {
    */
   memberSecret: ({
     privateState,
-  }: WitnessContext<Ledger, GatekeeperPrivateState>): [GatekeeperPrivateState, Uint8Array] => [
+  }: WitnessContext<Ledger, TrienPrivateState>): [TrienPrivateState, Uint8Array] => [
     privateState,
     privateState.secret,
   ],
@@ -40,8 +40,8 @@ export const witnesses = {
   memberPath: ({
     ledger,
     privateState,
-  }: WitnessContext<Ledger, GatekeeperPrivateState>): [
-    GatekeeperPrivateState,
+  }: WitnessContext<Ledger, TrienPrivateState>): [
+    TrienPrivateState,
     ReturnType<Ledger['members']['pathForLeaf']>,
   ] => {
     const commitment = pureCircuits.commitmentOf(privateState.secret);
@@ -55,4 +55,4 @@ export const witnesses = {
   },
 };
 
-export type GatekeeperWitnesses = typeof witnesses;
+export type TrienWitnesses = typeof witnesses;

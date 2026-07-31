@@ -3,7 +3,7 @@
  * is never part of a transaction. The chain only ever sees values derived
  * from `secret` through a hash, inside a proof.
  */
-export type GatekeeperPrivateState = {
+export type TrienPrivateState = {
   /**
    * The holder's root secret, 32 bytes of local entropy.
    *
@@ -15,7 +15,7 @@ export type GatekeeperPrivateState = {
 };
 
 /** Build a private state from a caller-supplied secret. */
-export const createPrivateState = (secret: Uint8Array): GatekeeperPrivateState => {
+export const createPrivateState = (secret: Uint8Array): TrienPrivateState => {
   if (secret.length !== 32) {
     throw new Error(`secret must be exactly 32 bytes, got ${secret.length}`);
   }
@@ -23,5 +23,5 @@ export const createPrivateState = (secret: Uint8Array): GatekeeperPrivateState =
 };
 
 /** Build a private state from fresh cryptographic randomness. */
-export const randomPrivateState = (): GatekeeperPrivateState =>
+export const randomPrivateState = (): TrienPrivateState =>
   createPrivateState(crypto.getRandomValues(new Uint8Array(32)));

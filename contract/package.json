@@ -1,22 +1,22 @@
 {
-  "name": "@gatekeeper/contract",
+  "name": "@trien/contract",
   "version": "0.1.0",
-  "description": "Compact contract for Gatekeeper: anonymous, revocable allowlist access on Midnight",
+  "description": "Compact contract for Triện: anonymous, revocable allowlist access on Midnight",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
     "./managed": {
-      "types": "./src/managed/gatekeeper/contract/index.d.ts",
-      "default": "./src/managed/gatekeeper/contract/index.js"
+      "types": "./src/managed/trien/contract/index.d.ts",
+      "default": "./src/managed/trien/contract/index.js"
     }
   },
   "files": [
     "src"
   ],
   "scripts": {
-    "compact": "compact compile src/gatekeeper.compact src/managed/gatekeeper",
+    "compact": "compact compile src/trien.compact src/managed/trien",
     "build": "tsc --build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

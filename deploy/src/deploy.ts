@@ -1,15 +1,15 @@
-import { createPrivateState, pureCircuits } from '@gatekeeper/contract';
+import { createPrivateState, pureCircuits } from '@trien/contract';
 import { deployContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { writeFileSync } from 'node:fs';
 import { DEPLOYMENT_PATH, NETWORK_ID, PRIVATE_STATE_ID, PROOF_SERVER_URI } from './config.ts';
-import { buildProviders, compiledGatekeeper } from './providers.ts';
+import { buildProviders, compiledTrien } from './providers.ts';
 import { awaitFunds, openWallet, operatorSecret } from './wallet.ts';
 
 const hex = (bytes: Uint8Array): string =>
   Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 
 /**
- * Deploy the Gatekeeper registry and bind it to an operator.
+ * Deploy the Triện registry and bind it to an operator.
  *
  * Two transactions, because they are two different things. Deployment puts the
  * circuits and an empty ledger on chain; `initialize` then writes the operator
@@ -30,7 +30,7 @@ const main = async (): Promise<void> => {
     const commitment = pureCircuits.commitmentOf(secret);
 
     const deployed = await deployContract(providers, {
-      compiledContract: compiledGatekeeper,
+      compiledContract: compiledTrien,
       privateStateId: PRIVATE_STATE_ID,
       initialPrivateState: createPrivateState(secret),
     });

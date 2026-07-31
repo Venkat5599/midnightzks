@@ -1,5 +1,5 @@
 /**
- * Public entry point for the Gatekeeper contract package.
+ * Public entry point for the Triện contract package.
  *
  * Consumers (the deploy script, the dApp) need three things: the generated
  * contract binding, the witness implementations that feed it private data, and
@@ -17,11 +17,11 @@ export {
   type Ledger,
   type PureCircuits,
   type Witnesses,
-} from './managed/gatekeeper/contract/index.js';
+} from './managed/trien/contract/index.js';
 
-export { witnesses, type GatekeeperWitnesses } from './witnesses.js';
+export { witnesses, type TrienWitnesses } from './witnesses.js';
 
-export { createPrivateState, randomPrivateState, type GatekeeperPrivateState } from './types.js';
+export { createPrivateState, randomPrivateState, type TrienPrivateState } from './types.js';
 
 /**
  * The circuits this contract exposes, as the identifiers midnight-js uses to
@@ -30,4 +30,4 @@ export { createPrivateState, randomPrivateState, type GatekeeperPrivateState } f
  */
 export const CIRCUIT_IDS = ['initialize', 'register', 'revoke', 'proveAccess'] as const;
 
-export type GatekeeperCircuitId = (typeof CIRCUIT_IDS)[number];
+export type TrienCircuitId = (typeof CIRCUIT_IDS)[number];

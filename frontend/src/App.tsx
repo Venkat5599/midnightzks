@@ -50,7 +50,7 @@ export const App = () => {
   return (
     <div className="relative z-2 mx-auto grid min-h-dvh max-w-[84rem] grid-rows-[auto_1fr_auto] gap-12 px-5 py-6 sm:px-10 lg:gap-28 lg:px-16 lg:py-10">
       <header className="flex items-center justify-between gap-4">
-        <h1 className="m-0 text-base font-semibold tracking-[-0.012em]">Gatekeeper</h1>
+        <h1 className="m-0 text-base font-semibold tracking-[-0.012em]">Triện</h1>
         <span className="inline-flex items-center gap-2 font-mono text-xs tracking-[0.02em] text-bone-3">
           <span className="size-[5px] rounded-full bg-clay-dim" aria-hidden />
           midnight {NETWORK_ID}

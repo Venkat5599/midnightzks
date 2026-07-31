@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Compile the Gatekeeper circuits with the Compact toolchain.
+# Compile the Triện circuits with the Compact toolchain.
 #
 # The compiler ships for Linux and macOS only, so on Windows this is run
 # through WSL: `wsl -d Ubuntu -- bash contract/compile.sh`.
@@ -16,4 +16,4 @@ cd "$(dirname "$0")"
 
 compact --version
 echo
-compact compile src/gatekeeper.compact src/managed/gatekeeper
+compact compile src/trien.compact src/managed/trien

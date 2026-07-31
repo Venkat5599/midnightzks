@@ -40,7 +40,7 @@ jobs:
         run: npm ci
 
       # Compiling from source in CI is the point: it proves the committed
-      # managed/ artifacts are reproducible from gatekeeper.compact, rather
+      # managed/ artifacts are reproducible from trien.compact, rather
       # than trusting whatever happens to be checked in.
       - name: Compile the contract
         working-directory: contract

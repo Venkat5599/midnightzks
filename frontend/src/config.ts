@@ -38,7 +38,7 @@ export const CONFIGURED_CONTRACT_ADDRESS: string | undefined =
 export const ZK_ASSETS_BASE = '/zk';
 
 /** Key under which this dApp's private state is stored locally. */
-export const PRIVATE_STATE_ID = 'gatekeeper';
+export const PRIVATE_STATE_ID = 'trien';
 
 /** Name of the local (browser) private state database. */
-export const PRIVATE_STATE_STORE = 'gatekeeper-private-state';
+export const PRIVATE_STATE_STORE = 'trien-private-state';

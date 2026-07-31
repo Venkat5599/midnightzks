@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { pureCircuits } from '../managed/gatekeeper/contract/index.js';
-import { actor, bytes32, GatekeeperSimulator } from './simulator.js';
+import { pureCircuits } from '../managed/trien/contract/index.js';
+import { actor, bytes32, TrienSimulator } from './simulator.js';
 
 const operator = actor('operator');
 const alice = actor('alice');
@@ -11,8 +11,8 @@ const NEWSROOM = bytes32('verifier:newsroom');
 const CLINIC = bytes32('verifier:clinic');
 
 /** A registry with `members` already registered, in order. */
-const registryWith = (...members: Uint8Array[]): GatekeeperSimulator => {
-  const sim = new GatekeeperSimulator(operator.state);
+const registryWith = (...members: Uint8Array[]): TrienSimulator => {
+  const sim = new TrienSimulator(operator.state);
   sim.initialize(operator.state);
   for (const commitment of members) {
     sim.register(operator.state, commitment);
@@ -22,7 +22,7 @@ const registryWith = (...members: Uint8Array[]): GatekeeperSimulator => {
 
 describe('setup', () => {
   it('binds the registry to the operator commitment and nothing else', () => {
-    const sim = new GatekeeperSimulator(operator.state);
+    const sim = new TrienSimulator(operator.state);
     sim.initialize(operator.state);
 
     // The chain stores a hash of the operator's secret, not the secret and not
@@ -35,7 +35,7 @@ describe('setup', () => {
   });
 
   it('refuses to re-initialize an existing registry', () => {
-    const sim = new GatekeeperSimulator(operator.state);
+    const sim = new TrienSimulator(operator.state);
     sim.initialize(operator.state);
 
     expect(() => sim.initialize(mallory.state)).toThrow(/already initialized/);

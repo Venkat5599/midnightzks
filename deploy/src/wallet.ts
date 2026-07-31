@@ -28,7 +28,7 @@ export const NATIVE_TOKEN = '010000000000000000000000000000000000000000000000000
  * on chain says nothing about the seed.
  */
 export const operatorSecret = (seed: string): Uint8Array =>
-  new Uint8Array(createHash('sha256').update(`gatekeeper:operator:${seed}`).digest());
+  new Uint8Array(createHash('sha256').update(`trien:operator:${seed}`).digest());
 
 /** Build a wallet from the configured seed and start it syncing. */
 export const openWallet = async (): Promise<{ wallet: Wallet; seed: string }> => {

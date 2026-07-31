@@ -1,4 +1,4 @@
-# Gatekeeper
+# Triện
 
 **Anonymous, revocable allowlist access on Midnight.**
 
@@ -25,7 +25,7 @@ prove membership without revealing identity.**
 
 Most token-gated apps today work by asking you to connect a wallet and then
 reading everything in it. The app learns your whole balance history and every
-other app you have touched. Gatekeeper flips that: the app should only ever
+other app you have touched. Triện flips that: the app should only ever
 learn one thing — **are you allowed in, or not.** Nothing else.
 
 So membership lives as a commitment inside a Merkle tree, and access is granted
@@ -53,7 +53,7 @@ which single fact becomes public and which stay private.
 ## Public state vs private witness
 
 Everything in the `ledger` declarations of
-[`contract/src/gatekeeper.compact`](contract/src/gatekeeper.compact) is on chain
+[`contract/src/trien.compact`](contract/src/trien.compact) is on chain
 and readable by anyone. Everything declared `witness` never leaves the holder's
 machine.
 
@@ -137,13 +137,13 @@ public tree, which needs no help from the operator.
 
 ```
 contract/
-  src/gatekeeper.compact          the contract
+  src/trien.compact          the contract
   src/index.ts                    what consumers import
   src/witnesses.ts                witness implementations (local, never sent)
   src/types.ts                    private state
   src/test/simulator.ts           runs circuits against the real Compact runtime
-  src/test/gatekeeper.test.ts     the test suite
-  src/managed/gatekeeper/         compiler output: circuits, keys, ZKIR
+  src/test/trien.test.ts     the test suite
+  src/managed/trien/         compiler output: circuits, keys, ZKIR
   compile.sh                      compiles via WSL on Windows
 deploy/
   src/new-wallet.ts               generates a throwaway seed
@@ -177,7 +177,7 @@ compact --version         # compact 0.5.1 at time of writing
 # 2. Compile the circuits and run the tests
 cd contract
 npm install
-npm run compact           # writes src/managed/gatekeeper/
+npm run compact           # writes src/managed/trien/
 npm test
 
 # 3. Proof server, for anything that touches a real network
@@ -195,14 +195,14 @@ The compiler prints exactly this, and nothing more — it reports the count, not
 the names:
 
 ```
-$ compact compile src/gatekeeper.compact src/managed/gatekeeper
+$ compact compile src/trien.compact src/managed/trien
 Compiling 4 circuits:
 ```
 
 The four circuits it built are visible in the output tree:
 
 ```
-$ ls src/managed/gatekeeper/keys src/managed/gatekeeper/zkir
+$ ls src/managed/trien/keys src/managed/trien/zkir
 keys: initialize.prover  initialize.verifier   proveAccess.prover  proveAccess.verifier
       register.prover    register.verifier     revoke.prover       revoke.verifier
 zkir: initialize.zkir    proveAccess.zkir      register.zkir       revoke.zkir
@@ -213,7 +213,7 @@ zkir: initialize.zkir    proveAccess.zkir      register.zkir       revoke.zkir
 The same output, as plain text, is in
 [`docs/screenshots/compile-output.txt`](docs/screenshots/compile-output.txt).
 
-`src/managed/gatekeeper/` holds `contract/` (generated TypeScript), `keys/`
+`src/managed/trien/` holds `contract/` (generated TypeScript), `keys/`
 (prover and verifier keys per circuit) and `zkir/` (the ZK intermediate
 representation, in both readable and binary form).
 
@@ -264,7 +264,7 @@ a bad URL.
 ```
 $ npm test
 
- ✓ src/test/gatekeeper.test.ts (14 tests) 571ms
+ ✓ src/test/trien.test.ts (14 tests) 571ms
 
  Test Files  1 passed (1)
       Tests  14 passed (14)

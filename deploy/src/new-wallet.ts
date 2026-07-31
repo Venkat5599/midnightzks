@@ -21,7 +21,7 @@ import {
  * can be shared to receive a faucet airdrop while the key stays put.
  */
 const main = async (): Promise<void> => {
-  const existing = readEnvFile().GATEKEEPER_SEED;
+  const existing = readEnvFile().TRIEN_SEED;
   const seed = existing ?? generateSeed();
 
   if (existing === undefined) {

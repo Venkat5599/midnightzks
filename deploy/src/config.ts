@@ -76,10 +76,10 @@ export const PROOF_SERVER_URI = process.env.PROOF_SERVER_URI ?? 'http://localhos
  * Must match the value the dApp uses (`frontend/src/config.ts`), or the two
  * would go looking for the operator's secret in different places.
  */
-export const PRIVATE_STATE_ID = 'gatekeeper';
+export const PRIVATE_STATE_ID = 'trien';
 
 /** Name of the local LevelDB store holding private state. */
-export const PRIVATE_STATE_STORE = 'gatekeeper-private-state';
+export const PRIVATE_STATE_STORE = 'trien-private-state';
 
 /**
  * Read `KEY=value` pairs out of deploy/.env.
@@ -107,10 +107,10 @@ export const writeSeed = (seed: string): void => {
   writeFileSync(
     ENV_PATH,
     [
-      '# Throwaway Preview seed for deploying the Gatekeeper registry.',
+      '# Throwaway Preview seed for deploying the Triện registry.',
       '# Faucet funds only. This file is gitignored; do not commit it, and do',
       '# not reuse this seed for anything that holds real value.',
-      `GATEKEEPER_SEED=${seed}`,
+      `TRIEN_SEED=${seed}`,
       '',
     ].join('\n'),
     { encoding: 'utf8', mode: 0o600 },
@@ -119,12 +119,12 @@ export const writeSeed = (seed: string): void => {
 
 /** The configured seed, or a clear instruction if there is not one yet. */
 export const requireSeed = (): string => {
-  const seed = process.env.GATEKEEPER_SEED ?? readEnvFile().GATEKEEPER_SEED;
+  const seed = process.env.TRIEN_SEED ?? readEnvFile().TRIEN_SEED;
   if (seed === undefined || seed === '') {
     throw new Error(`No seed found. Run "npm run new-wallet" first — it writes one to ${ENV_PATH}.`);
   }
   if (!/^[0-9a-f]{64}$/i.test(seed)) {
-    throw new Error('GATEKEEPER_SEED must be 64 hex characters (32 bytes).');
+    throw new Error('TRIEN_SEED must be 64 hex characters (32 bytes).');
   }
   return seed;
 };

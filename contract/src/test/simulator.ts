@@ -10,8 +10,8 @@ import {
   type Ledger,
   ledger,
   pureCircuits,
-} from '../managed/gatekeeper/contract/index.js';
-import { createPrivateState, type GatekeeperPrivateState } from '../types.js';
+} from '../managed/trien/contract/index.js';
+import { createPrivateState, type TrienPrivateState } from '../types.js';
 import { witnesses } from '../witnesses.js';
 
 /** Deterministic 32-byte value, so failures are reproducible. */
@@ -23,7 +23,7 @@ export const bytes32 = (label: string): Uint8Array => {
 };
 
 /** A participant: a secret plus the commitment the chain would see for it. */
-export const actor = (label: string): { state: GatekeeperPrivateState; commitment: Uint8Array } => {
+export const actor = (label: string): { state: TrienPrivateState; commitment: Uint8Array } => {
   const state = createPrivateState(bytes32(label));
   return { state, commitment: pureCircuits.commitmentOf(state.secret) };
 };
@@ -39,12 +39,12 @@ export const actor = (label: string): { state: GatekeeperPrivateState; commitmen
  * private state, which is how it can model an operator and several mutually
  * distrusting members against one registry.
  */
-export class GatekeeperSimulator {
-  private readonly contract: Contract<GatekeeperPrivateState>;
-  private circuitContext: CircuitContext<GatekeeperPrivateState>;
+export class TrienSimulator {
+  private readonly contract: Contract<TrienPrivateState>;
+  private circuitContext: CircuitContext<TrienPrivateState>;
 
-  constructor(initial: GatekeeperPrivateState) {
-    this.contract = new Contract<GatekeeperPrivateState>(witnesses);
+  constructor(initial: TrienPrivateState) {
+    this.contract = new Contract<TrienPrivateState>(witnesses);
     const coinPublicKey = '0'.repeat(64);
     const { currentContractState, currentPrivateState } = this.contract.initialState(
       createConstructorContext(initial, coinPublicKey),
@@ -70,27 +70,27 @@ export class GatekeeperSimulator {
    * none of them can see another's.
    */
   private as<T>(
-    who: GatekeeperPrivateState,
-    call: (ctx: CircuitContext<GatekeeperPrivateState>) => CircuitResults<GatekeeperPrivateState, T>,
+    who: TrienPrivateState,
+    call: (ctx: CircuitContext<TrienPrivateState>) => CircuitResults<TrienPrivateState, T>,
   ): T {
     const { result, context } = call({ ...this.circuitContext, currentPrivateState: who });
     this.circuitContext = context;
     return result;
   }
 
-  initialize(operator: GatekeeperPrivateState): void {
+  initialize(operator: TrienPrivateState): void {
     this.as(operator, (ctx) => this.contract.impureCircuits.initialize(ctx));
   }
 
-  register(operator: GatekeeperPrivateState, commitment: Uint8Array): void {
+  register(operator: TrienPrivateState, commitment: Uint8Array): void {
     this.as(operator, (ctx) => this.contract.impureCircuits.register(ctx, commitment));
   }
 
-  revoke(operator: GatekeeperPrivateState, index: bigint): void {
+  revoke(operator: TrienPrivateState, index: bigint): void {
     this.as(operator, (ctx) => this.contract.impureCircuits.revoke(ctx, index));
   }
 
-  proveAccess(member: GatekeeperPrivateState, verifierId: Uint8Array): void {
+  proveAccess(member: TrienPrivateState, verifierId: Uint8Array): void {
     this.as(member, (ctx) => this.contract.impureCircuits.proveAccess(ctx, verifierId));
   }
 }

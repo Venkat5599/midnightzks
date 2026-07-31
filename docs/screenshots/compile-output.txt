@@ -1,11 +1,11 @@
 ﻿$ compact --version
 compact 0.5.1
 
-$ compact compile src/gatekeeper.compact src/managed/gatekeeper
+$ compact compile src/trien.compact src/managed/trien
 Compiling 4 circuits:
 
-$ ls src/managed/gatekeeper/keys src/managed/gatekeeper/zkir
-src/managed/gatekeeper/keys:
+$ ls src/managed/trien/keys src/managed/trien/zkir
+src/managed/trien/keys:
 initialize.prover
 initialize.verifier
 proveAccess.prover
@@ -15,7 +15,7 @@ register.verifier
 revoke.prover
 revoke.verifier
 
-src/managed/gatekeeper/zkir:
+src/managed/trien/zkir:
 initialize.bzkir
 initialize.zkir
 proveAccess.bzkir

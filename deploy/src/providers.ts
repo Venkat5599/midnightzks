@@ -1,8 +1,8 @@
 import {
-  Contract as GatekeeperContractCtor,
+  Contract as TrienContractCtor,
   witnesses,
-  type GatekeeperPrivateState,
-} from '@gatekeeper/contract';
+  type TrienPrivateState,
+} from '@trien/contract';
 import type { ContractProviders } from '@midnight-ntwrk/midnight-js-contracts';
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
 import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
@@ -28,7 +28,7 @@ import { MANAGED_DIR, NodeZKConfigProvider } from './zk-config.ts';
  * `deployContract` infer circuit names and argument types from the Compact
  * source rather than having them restated by hand.
  */
-export type GatekeeperContract = EffectContract<GatekeeperPrivateState>;
+export type TrienContract = EffectContract<TrienPrivateState>;
 
 /**
  * The compiled-contract binding: the generated class, the witnesses that supply
@@ -38,15 +38,15 @@ export type GatekeeperContract = EffectContract<GatekeeperPrivateState>;
  * rather than copying artifacts around, so what gets proved against is exactly
  * what `npm run compact` produced.
  */
-export const compiledGatekeeper = CompiledContract.make<GatekeeperContract, GatekeeperPrivateState>(
-  'gatekeeper',
-  GatekeeperContractCtor as never,
+export const compiledTrien = CompiledContract.make<TrienContract, TrienPrivateState>(
+  'trien',
+  TrienContractCtor as never,
 ).pipe(
   CompiledContract.withWitnesses(witnesses as never),
   CompiledContract.withCompiledFileAssets(MANAGED_DIR),
 );
 
-export type GatekeeperProviders = ContractProviders<GatekeeperContract>;
+export type TrienProviders = ContractProviders<TrienContract>;
 
 /**
  * Password for the local private-state database.
@@ -60,7 +60,7 @@ export type GatekeeperProviders = ContractProviders<GatekeeperContract>;
  */
 const privateStatePassword = (seed: string): string => {
   const digest = createHash('sha256')
-    .update(`gatekeeper:private-state:${seed}`)
+    .update(`trien:private-state:${seed}`)
     .digest('base64url');
   return `Gk!${digest.slice(0, 40)}`;
 };
@@ -97,7 +97,7 @@ export const walletProviders = (
  * so pointing this at someone else's host would give them the secret the whole
  * contract exists to protect.
  */
-export const buildProviders = async (wallet: Wallet, seed: string): Promise<GatekeeperProviders> => {
+export const buildProviders = async (wallet: Wallet, seed: string): Promise<TrienProviders> => {
   const state = await firstValueFrom(wallet.state());
   const zkConfigProvider = new NodeZKConfigProvider<string>();
 
@@ -111,5 +111,5 @@ export const buildProviders = async (wallet: Wallet, seed: string): Promise<Gate
     zkConfigProvider,
     proofProvider: httpClientProofProvider(PROOF_SERVER_URI, zkConfigProvider),
     ...walletProviders(wallet, state.coinPublicKey, state.encryptionPublicKey),
-  } as GatekeeperProviders;
+  } as TrienProviders;
 };

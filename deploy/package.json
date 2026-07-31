@@ -1,16 +1,16 @@
 {
-  "name": "@gatekeeper/deploy",
+  "name": "@trien/deploy",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Generates a Preview wallet and deploys the Gatekeeper registry",
+  "description": "Generates a Preview wallet and deploys the Triện registry",
   "scripts": {
     "new-wallet": "node --experimental-strip-types src/new-wallet.ts",
     "address": "node --experimental-strip-types src/address.ts",
     "deploy": "node --experimental-strip-types src/deploy.ts"
   },
   "dependencies": {
-    "@gatekeeper/contract": "file:../contract",
+    "@trien/contract": "file:../contract",
     "@midnight-ntwrk/compact-runtime": "0.16.0",
     "@midnight-ntwrk/ledger": "4.0.0",
     "@midnight-ntwrk/midnight-js-contracts": "4.1.1",

@@ -1,5 +1,5 @@
 {
-  "name": "@gatekeeper/frontend",
+  "name": "@trien/frontend",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@gatekeeper/contract": "file:../contract",
+    "@trien/contract": "file:../contract",
     "@midnight-ntwrk/compact-runtime": "0.16.0",
     "@midnight-ntwrk/dapp-connector-api": "4.0.1",
     "@midnight-ntwrk/ledger": "4.0.0",
