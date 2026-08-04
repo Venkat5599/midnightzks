@@ -7,6 +7,8 @@
   "scripts": {
     "new-wallet": "node --experimental-strip-types src/new-wallet.ts",
     "address": "node --experimental-strip-types src/address.ts",
+    "unshielded": "node --experimental-strip-types src/unshielded-address.ts",
+    "mnemonic": "node --experimental-strip-types src/mnemonic.ts",
     "deploy": "node --experimental-strip-types src/deploy.ts"
   },
   "dependencies": {

@@ -226,10 +226,21 @@ proof server is handed the witness, and sending that to someone else's host
 would give away the secret this design exists to protect.
 
 ```bash
+docker run -d --rm -p 6300:6300 --name midnight-proof-server \
+  midnightnetwork/proof-server -- 'midnight-proof-server --num-workers 4'
+```
+
+Note the flag. The published image no longer accepts the `--network preview`
+argument that older instructions pass; it exits immediately with
+`error: unexpected argument '--network' found`. Only `--num-workers` remains.
+
+```bash
 cd deploy
 npm install
 npm run new-wallet        # writes a throwaway seed to deploy/.env (gitignored)
-npm run address           # prints the address; fund it from the faucet
+npm run address           # shielded address + tDUST fee balance
+npm run unshielded        # unshielded Night address — this is what the faucet wants
+npm run mnemonic          # the same seed as 24 words, for importing into Lace
 npm run deploy            # deploys, then calls initialize
 ```
 
@@ -261,18 +272,48 @@ faucet is where it stops. Both public networks refuse, for different reasons.
 from its health endpoint and dispenses nothing at all, which is why this project
 targets Preview instead.
 
-**Preview** is serving, but rejects the address this SDK generates:
-`POST /api/drips` answers `400 {"error":"Provided address is invalid"}`. The
-shielded `mn_shield-addr_test1…` form was tried, along with the `_dev1`,
-`_undeployed1` and legacy `coinPublicKey|encryptionPublicKey` variants. Deriving
-the unshielded Night address does not help either: `signatureVerifyingKey()`
-wants a serialised `SigningKey` and rejects raw HD-derived bytes. Every
-`@midnight-ntwrk` package here is already at its latest published version, so
-there is no upgrade to reach for.
+**Preview** is serving (`/health` reports `{"status":"SERVING"}`), and the
+address problem is now solved. The faucet rejected the shielded
+`mn_shield-addr_test1…` form because it wants the *unshielded* Night address,
+and that address does derive cleanly — `signatureVerifyingKey()` refuses raw
+HD bytes, but `signingKeyFromBip340()` converts them first:
 
-The practical route is Lace: fund a Lace wallet on Preview, then forward tNight
-to the address `npm run address` prints. The moment it has a balance,
-`npm run deploy` completes and the address lands in `deployment.json`.
+```
+seed → HDWallet.fromSeed → selectRole(Roles.NightExternal) → deriveKeyAt(0)
+     → signingKeyFromBip340 → signatureVerifyingKey → addressFromKey
+     → UnshieldedAddress → MidnightBech32m.encode  → mn_addr_preview1…
+```
+
+That is what `npm run unshielded` prints (`deploy/src/unshielded-address.ts`).
+
+The remaining blocker is a different one, and it is a real gap in the SDK
+rather than a mistake here. **Funding is two steps, and only the first is
+scriptable.** The faucet dispenses tNight to the unshielded address; tNight
+then has to be *delegated* to generate the tDust that actually pays fees.
+Holding tNight alone produces nothing. Delegation has no headless API in
+`@midnight-ntwrk/wallet` 5.0.0 — the state object it emits carries shielded
+Zswap fields only:
+
+```
+address  addressLegacy  availableCoins  balances  coinPublicKey  coinPublicKeyLegacy
+coins  encryptionPublicKey  encryptionPublicKeyLegacy  nullifiers  pendingCoins
+transactionHistory  syncProgress
+```
+
+No Night field, no Dust field, no delegation call. The indexer exposes no
+unshielded-UTXO-by-address query either, and the node RPC offers only
+`midnight_ledgerStateRoot` / `midnight_contractState`, so a headless client
+cannot even *observe* the tNight it was sent. 5.0.0 is the latest published
+version, so there is no upgrade to reach for.
+
+The practical route is therefore Lace, for the delegation step specifically.
+`npm run mnemonic` prints the deploy seed as the 24 words Lace imports —
+Midnight's seed convention is BIP39 entropy, so the hex in `.env` and the phrase
+are the same secret in two encodings, which keeps the operator credential in
+`wallet.ts` stable across the hand-off. In Lace, on Preview: request tNight,
+then use **Generate tDust** to delegate it. The moment `npm run address` reports
+a non-zero fee balance, `npm run deploy` completes and the address lands in
+`deployment.json`.
 
 A note on networks, because it cost real time: the `testnet-02` endpoints this
 project started against no longer resolve, and the indexer's GraphQL path moved
