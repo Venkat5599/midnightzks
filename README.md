@@ -1,172 +1,284 @@
-# Triện
+<div align="center">
 
-**Anonymous, revocable allowlist access on Midnight.**
+<img src="docs/media/1.png" alt="Triện — anonymous, revocable allowlist access on Midnight" width="100%" />
 
-[![CI](https://github.com/Venkat5599/mn/actions/workflows/ci.yml/badge.svg)](https://github.com/Venkat5599/mn/actions/workflows/ci.yml)
-[![Vercel](https://img.shields.io/badge/deploy-vercel-000?logo=vercel)](https://midnight-rust-psi.vercel.app)
+&nbsp;
 
-| | |
-| --- | --- |
-| Live dApp | https://midnight-rust-psi.vercel.app |
-| Network | Midnight Preview |
-| Preview Contract address | `a234fcd8498a793f498185cc35a2e29c4145d3cc61bdd0341eefbab887bfbca3` |
-| Source | https://github.com/Venkat5599/mn |
-| Follow | [@Auditflow5599](https://x.com/Auditflow5599) |
-| Demo video | https://youtu.be/5gKaCGEMLYc |
+[![Live demo](https://img.shields.io/badge/●_live-midnight--rust--psi.vercel.app-34d399)](https://midnight-rust-psi.vercel.app)
+![Preview: contract](https://img.shields.io/badge/📜_Preview-a234fcd8…-14151a)
+[![CI](https://github.com/Venkat5599/midnightzks/actions/workflows/ci.yml/badge.svg)](https://github.com/Venkat5599/midnightzks/actions/workflows/ci.yml)
+![Tests](https://img.shields.io/badge/tests-14%20passing-3fb950)
+![Stack](https://img.shields.io/badge/React%2018%20·%20Vite%206%20·%20TypeScript-1f1f23)
+![Compact](https://img.shields.io/badge/Compact%200.23-4f46e5)
+![Midnight](https://img.shields.io/badge/Midnight-Preview-34d399)
+[![License: MIT](https://img.shields.io/badge/license-MIT-34d399.svg)](LICENSE)
 
-An operator issues credentials to approved people. Those people prove they are
-on the list — to a newsroom, a clinic, a support forum, a beta programme —
-without revealing who they are, and without any two of those places being able
-to work out they saw the same person. When the operator revokes someone, that
-person is locked out immediately, and the proofs they already hold stop working.
+### Prove you're on the list. Nobody learns who you are.
 
-Chosen problem (Level 3, from the provided list): **Private Allowlist Access —
-prove membership without revealing identity.**
+Triện is an on-chain allowlist where membership is a zero-knowledge claim. An operator issues commitments; members prove they are on the list without revealing which member they are; revocation locks a member out immediately — and kills the proofs they already hold. Built in Compact on Midnight Preview, the one chain where the allowlist can sit on chain while membership stays private.
 
-## The idea
+### ▶ Live now — the instrument runs at **[midnight-rust-psi.vercel.app](https://midnight-rust-psi.vercel.app)**
 
-Most token-gated apps today work by asking you to connect a wallet and then
-reading everything in it. The app learns your whole balance history and every
-other app you have touched. Triện flips that: the app should only ever
-learn one thing — **are you allowed in, or not.** Nothing else.
+**[ Live dApp ↗ ](https://midnight-rust-psi.vercel.app)** · **[ Demo video ↗ ](https://youtu.be/5gKaCGEMLYc)** · **[ How it works ↓ ](#how-it-works)** · **[ Run it locally ↓ ](#run-it-locally)**
 
-So membership lives as a commitment inside a Merkle tree, and access is granted
-by a zero-knowledge proof rather than by showing a wallet. The operator
-publishes a tree of *commitments*, hashes of secrets only the holders know. To
-get in, a holder proves in zero knowledge that they know a secret whose hash
-sits somewhere in that tree, and publishes a nullifier instead of an identity.
+Built for the Midnight challenge — Private Allowlist Access (Level 3). MIT licensed.
 
-The nullifier is hashed from the secret plus the verifier id plus the current
-epoch. Scoping it to the verifier means two different sites cannot correlate the
-same person across both of them. Scoping it to the epoch means a revocation
-kills proofs that were already outstanding, and not only future ones. The public
-ledger holds commitments, a nullifier set, an epoch counter and an access count.
-It holds zero identities.
+</div>
 
-Private allowlists are the boring plumbing a lot of real things need: DAO voting
-gates, paid community access, age checks, employer verification. All of them
-currently leak far more than they need to. Midnight is the only chain where the
-allowlist can sit on chain while the membership itself stays private, which is
-the whole reason it was picked.
+---
 
-The design is not "hide everything." It is a specific, defensible choice about
-which single fact becomes public and which stay private.
+## Table of contents
 
-## Public state vs private witness
+- [See it in one command](#-see-it-in-one-command)
+- [The problem](#the-problem)
+- [How it works](#how-it-works)
+  - [1 · Register — the operator issues a commitment](#1--register--the-operator-issues-a-commitment)
+  - [2 · Prove — membership without identity](#2--prove--membership-without-identity)
+  - [3 · Revoke — immediate, not eventual](#3--revoke--immediate-not-eventual)
+  - [4 · Stay unlinkable — the nullifier](#4--stay-unlinkable--the-nullifier)
+- [Architecture](#architecture)
+  - [Transaction flow](#transaction-flow)
+  - [Component by component](#component-by-component)
+- [Engineering decisions — the hard problems](#engineering-decisions--the-hard-problems)
+- [Build checklist](#build-checklist)
+- [What's real vs pending — the honesty table](#whats-real-vs-pending--the-honesty-table)
+- [Tests](#tests)
+- [Run it locally](#run-it-locally)
+- [Deploy](#deploy)
+- [Project layout](#project-layout)
+- [Tech stack](#tech-stack)
+- [Roadmap](#roadmap)
+- [License](#license)
+
+---
+
+## ▶ See it in one command
+
+The registry is live on Midnight Preview. The public indexer returns its state right now:
+
+```bash
+$ curl -s -X POST https://indexer.preview.midnight.network/api/v3/graphql \
+    -H 'content-type: application/json' \
+    -d '{"query":"{ contract(address: \"a234fcd8498a793f498185cc35a2e29c4145d3cc61bdd0341eefbab887bfbca3\") { state } }"}'
+{"data":{"contract":{"state":"6d69646e696768743a636f6e74726163742d73746174655b76365d3a70…"}}}
+```
+
+The state blob carries the ledger: a Merkle tree of member commitments, a set of spent nullifiers, an epoch counter and an access counter. Zero identities.
+
+The four circuits compile from source, and the suite that exercises them passes:
+
+```bash
+$ npm test
+
+ RUN  v2.1.9 /home/arch/midnightzks/contract
+
+ ✓ src/test/trien.test.ts (14 tests) 1427ms
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+```
+
+---
+
+## The problem
+
+Token-gated apps today work by asking you to connect a wallet, then reading everything in it. The app learns your whole balance history and every other app you have touched. For a gate, it needs exactly one bit — **are you allowed in, or not** — and it takes a biography instead.
+
+- **Every wallet leaks more than the gate asks for** — balance, history, other memberships, all readable
+- **Allowlists are identity lists** — membership itself is the sensitive fact, and it is published to prove it
+- **Correlation across sites** — the same person at two gated sites is trivially linkable
+- **Revocation is weak** — a member who was removed still holds credentials that keep working
+
+Existing approaches hide the *transaction* but not the *membership*. Triện hides the membership: the list lives on chain as opaque commitments, and access is granted by a zero-knowledge proof, not by showing a wallet.
+
+---
+
+## How it works
 
 Everything in the `ledger` declarations of
-[`contract/src/trien.compact`](contract/src/trien.compact) is on chain
-and readable by anyone. Everything declared `witness` never leaves the holder's
-machine.
+[`contract/src/trien.compact`](contract/src/trien.compact) is on chain and readable by anyone. Everything declared `witness` never leaves the holder's machine.
 
 ### Public ledger state
 
 | Field | Type | What it is | What it leaks |
 | --- | --- | --- | --- |
-| `members` | `HistoricMerkleTree<10, Bytes<32>>` | Commitments of approved members | How many members exist. Each leaf is `H("gk:commit", secret)`, so it identifies nobody. |
-| `nullifiers` | `Set<Bytes<32>>` | Spent access tokens | How many accesses happened. Each is `H("gk:null", secret, verifier, epoch)` — an opaque hash. |
-| `epoch` | `Counter` | Bumped on every revocation | How many revocations have occurred. |
-| `accessCount` | `Counter` | Total successful accesses | Aggregate usage, and nothing per-person. |
-| `admin` | `Bytes<32>` | Commitment of the operator | That an operator exists. Not who they are. |
+| `members` | `HistoricMerkleTree<10, Bytes<32>>` | Commitments of approved members | How many members exist. Each leaf is `H("gk:commit", secret)` — identifies nobody |
+| `nullifiers` | `Set<Bytes<32>>` | Spent access tokens | How many accesses happened. Each is `H("gk:null", secret, verifier, epoch)` — an opaque hash |
+| `epoch` | `Counter` | Bumped on every revocation | How many revocations have occurred |
+| `accessCount` | `Counter` | Total successful accesses | Aggregate usage, nothing per person |
+| `admin` | `Bytes<32>` | Commitment of the operator | That an operator exists, not who they are |
 
-### Private witnesses
+### 1 · Register — the operator issues a commitment
 
-| Witness | What it is | Why it is private |
-| --- | --- | --- |
-| `memberSecret()` | The holder's 32-byte root secret | It *is* the credential. Anyone holding it is the member. It is used inside the proof to recompute the commitment and derive the nullifier, and is never disclosed. |
-| `memberPath()` | Merkle authentication path from the holder's commitment to a valid root | The path identifies *which leaf* the holder occupies. Publishing it would deanonymise them completely. |
+The operator adds a member by inserting their commitment into the tree. The chain learns only that the approved set grew by one:
 
-### Where `disclose()` is used, and why
+```compact
+export circuit register(commitment: Bytes<32>): [] {
+  assert(commitmentOf(memberSecret()) == admin, "caller is not the operator");
+  members.insert(disclose(commitment));
+}
+```
 
-The compiler refuses to publish anything derived from a witness unless you say
-so explicitly. There are exactly four `disclose()` calls, and each is a
-deliberate decision:
+`insert`, not `insertHash` — the leaf stored is `leafHash(commitment)`, which is what `merkleTreePathRoot` recomputes when `proveAccess` validates a path. Storing the commitment directly would make every membership proof fail against the root (see [Engineering decisions](#engineering-decisions--the-hard-problems)).
 
-- `initialize` — discloses the operator's commitment. A hash, not an identity.
-- `register` — discloses the commitment being added. The operator already knows
-  it; they issued it.
-- `revoke` — discloses the leaf index being cleared. Which slot is being emptied
-  is inherently public, since the tree is public.
-- `proveAccess` — discloses the Merkle **root** (already public ledger state; a
-  root does not say which leaf produced it) and the **nullifier**. Nothing else.
+### 2 · Prove — membership without identity
 
-Notably, `proveAccess` does *not* disclose the secret, the commitment, or the
-path — so an access cannot be traced back to a registration.
+To get in, a holder proves in zero knowledge that they know a secret whose hash sits in the tree, and publishes a nullifier instead of an identity:
 
-## Privacy model: what an observer can and cannot learn
+```compact
+export circuit proveAccess(verifierId: Bytes<32>): [] {
+  const secret = memberSecret();
+  const path = memberPath();
 
-Assume an observer who reads every block, plus the verifier being proven to, plus
-the registry operator. All of them, cooperating.
+  assert(path.leaf == commitmentOf(secret), "path does not match caller's commitment");
+  assert(members.checkRoot(disclose(merkleTreePathRoot<10, Bytes<32>>(path))),
+         "stale or unknown Merkle root - membership revoked or never granted");
 
-**They can learn:**
+  const nul = disclose(nullifierOf(secret, verifierId, epoch.read()));
+  assert(!nullifiers.member(nul), "credential already used at this verifier");
 
-- how many members are registered, and how many have been revoked;
-- how many accesses have occurred in total, and at their own verifier;
-- that a given access was made by *someone* who was on the list at the time.
+  nullifiers.insert(nul);
+  accessCount.increment(1);
+}
+```
 
-**They cannot learn:**
+The circuit discloses the Merkle **root** — already public ledger state, and a root does not say which leaf produced it — plus the **nullifier**. It never discloses the secret, the commitment, or the path, so an access cannot be traced back to a registration.
 
-- which member performed any given access;
-- whether two accesses at *different* verifiers came from the same member — the
-  nullifier is salted with `verifierId`, so colluding verifiers see two unrelated
-  hashes;
-- anything at all about a member who never proves access;
-- a member's secret, from any amount of on-chain data.
+Holding **reveal what happened** in the dApp traces the proof back to the leaf it came from — the view the chain never gets:
 
-**Deliberate, and worth stating plainly:** repeat visits by one member to *one*
-verifier within one epoch are prevented, not hidden — that is the entire purpose
-of the nullifier. One credential, one access per verifier per epoch. Enforcing
-uniqueness necessarily means publishing something stable per (member, verifier,
-epoch), and the nullifier is the minimum such thing.
+<img src="docs/media/2.png" alt="the dApp — revealed: the proof traced back to its leaf" width="100%" />
 
-### Revocation is immediate, not eventual
+### 3 · Revoke — immediate, not eventual
 
-This is the part that is easy to get wrong. Clearing a leaf is not enough: a
-revoked member already holds a Merkle path to an *older* root, and a naive
-contract would happily accept a proof against it. `revoke` therefore does three
-things:
+Clearing a leaf is not enough: a revoked member already holds a Merkle path to an *older* root, and a naive contract would accept a proof against it. `revoke` therefore does three things:
 
 1. zeroes the leaf, removing the member from the tree;
-2. calls `resetHistory()`, invalidating every previously-valid root, so stale
-   paths stop verifying;
-3. bumps `epoch`, which changes every member's nullifier, so a proof built before
-   the revocation cannot be replayed after it.
+2. calls `resetHistory()`, invalidating every previously-valid root, so stale paths stop verifying;
+3. bumps `epoch`, which changes every member's nullifier, so a proof built before the revocation cannot be replayed after it.
 
-Non-revoked members are unaffected — they rebuild their path from the current
-public tree, which needs no help from the operator.
+Non-revoked members are unaffected — they rebuild their path from the current public tree, with no help from the operator.
 
-## Repository layout
+### 4 · Stay unlinkable — the nullifier
 
-```
-contract/
-  src/trien.compact          the contract
-  src/index.ts                    what consumers import
-  src/witnesses.ts                witness implementations (local, never sent)
-  src/types.ts                    private state
-  src/test/simulator.ts           runs circuits against the real Compact runtime
-  src/test/trien.test.ts     the test suite
-  src/managed/trien/         compiler output: circuits, keys, ZKIR
-  compile.sh                      compiles via WSL on Windows
-deploy/
-  src/new-wallet.ts               generates a throwaway seed
-  src/address.ts                  prints the address and balance
-  src/deploy.ts                   deploys, then binds the operator
-  src/providers.ts                compiled-contract binding + providers
-  src/zk-config.ts                serves ZK artifacts from disk
-frontend/
-  src/App.tsx                     the page
-  src/Plate.tsx                   the allowlist, drawn
-  src/lib/lace.ts                 wallet connect / disconnect
-.github/workflows/ci.yml          compile + typecheck + test on every push
-vercel.json                       build config for the deployed dApp
+The nullifier is hashed from the secret plus the verifier id plus the current epoch:
+
+```compact
+export pure circuit nullifierOf(
+  secret: Bytes<32>,
+  verifierId: Bytes<32>,
+  currentEpoch: Uint<64>
+): Bytes<32> {
+  return persistentHash<NullifierInput>(NullifierInput {
+    domain: pad(32, "gk:null"),
+    secret: secret,
+    verifierId: verifierId,
+    epoch: currentEpoch
+  });
+}
 ```
 
-## Running it locally
+Scoping it to the **verifier** means two different sites cannot correlate the same person across both — colluding verifiers receive two unrelated hashes. Scoping it to the **epoch** means revocation kills proofs that were already outstanding, not only future ones.
 
-Requires **Node 22+**, **Docker** (for the proof server), and the **Compact
-toolchain**. On Windows, install the toolchain inside WSL — the compiler ships
-for Linux and macOS only, and Windows has its own unrelated `compact.exe` (the
-NTFS compression tool) that will shadow it on `PATH`.
+The one deliberate, stated limit: repeat visits by one member to *one* verifier within *one* epoch are prevented, not hidden. Enforcing uniqueness necessarily means publishing something stable per (member, verifier, epoch), and the nullifier is the minimum such thing.
+
+---
+
+## Architecture
+
+```
+Lace wallet ──▶ Triện dApp ──▶ proof server (local, :6300)
+   │                │                │
+   │                └──▶ Midnight indexer / node (Preview)
+   │                            │
+   │                            └──▶ Triện registry contract
+```
+
+Proving happens locally on purpose: a proof server is handed the witness, and sending that to someone else's host would give away the secret this design exists to protect.
+
+### Transaction flow
+
+```bash
+1. Operator deploys        → two txs: circuits + empty ledger, then initialize binds the admin commitment
+2. Operator registers      → register(commitment): proves operator identity, inserts a leaf
+3. Member proves           → witness (secret + path) stays local; tx publishes root + nullifier
+4. Observer reads          → ledger shows counts and opaque nullifiers, never identities
+5. Operator revokes        → revoke(index): zeroes leaf, resets history, bumps epoch
+6. Member re-proves        → stale path rejected, old nullifier void — revocation is retroactive
+```
+
+### Component by component
+
+| Component | Technology | Responsibility |
+|---|---|---|
+| Triện contract | Compact 0.23 | Members tree, nullifier set, epoch, access count — the on-chain allowlist |
+| Witness driver | TypeScript (`@trien/contract`) | `memberSecret()` / `memberPath()` — never leave the machine |
+| Proof server | `midnightnetwork/proof-server` | Local proving; witness never sent to a host |
+| dApp | React 18, Vite 6, Lace connector | Connect Lace, run the instrument, hold-to-reveal |
+| Deploy tooling | `@midnight-ntwrk/wallet` 5.0.0 | Seed → unshielded address → tDust → deploy + initialize |
+| CI | GitHub Actions (Node 22) | Compile from source + typecheck + tests + frontend build |
+
+---
+
+## Engineering decisions — the hard problems
+
+**1. `register` must store `leafHash(commitment)`, not the commitment.** The first version used `members.insertHash(commitment)`, which writes the commitment into the tree verbatim. But `proveAccess` validates a path with `merkleTreePathRoot()`, which applies `leafHash()` to the leaf before folding upward. The two disagreed, so `checkRoot()` rejected every honestly constructed proof: the contract compiled, would have deployed, and could never have admitted anybody. Switching to `members.insert()` fixed it. This class of mistake is invisible until something actually tries to prove membership — which is why the test suite exists.
+
+**2. Revocation is a three-part transaction, not a leaf clear.** Zeroing a leaf leaves a revoked member holding a valid path to an older root. `revoke` also calls `resetHistory()` to invalidate every previously-valid root and bumps the epoch to change every member's nullifier. Stale paths stop verifying; proofs built before the revocation cannot be replayed after it.
+
+**3. The nullifier is the minimum public leak.** One credential, one access per verifier per epoch. Uniqueness necessarily means publishing something stable per (member, verifier, epoch) — the nullifier is that minimum. Scoping by verifier makes colluding verifiers see unrelated hashes; scoping by epoch makes revocation retroactive. The README and the dApp both state the limit plainly: repeat visits are *prevented*, not hidden.
+
+**4. The proof server runs locally.** A proof server is handed the witness — the secret plus the Merkle path. Pointing the dApp at a hosted server would defeat the design. The dApp defaults to localhost proving and only falls back to a configured server after a wallet reports one.
+
+**5. Funding Preview is two steps, and only one is scriptable.** The faucet dispenses tNight to the *unshielded* Night address, and rejects the shielded form (`mn_shield-addr_test1…`). Deriving it needs `signingKeyFromBip340()` first — `signatureVerifyingKey()` refuses raw HD bytes. Then tNight must be *delegated* to generate the tDust that pays fees, and delegation has no headless API in `@midnight-ntwrk/wallet` 5.0.0. The deploy seed's 24-word mnemonic is handed to Lace for **Generate tDust**, after which `npm run deploy` completes. The endpoints that used to work compound the pain: `testnet-02` no longer resolves and the indexer's GraphQL moved to `/api/v3/graphql` — a wrong endpoint fails silently, because the wallet builds and prints a correct address that simply never syncs.
+
+---
+
+## Build checklist
+
+- [x] Contract compiles — 4 circuits via `compact compile` (CI recompiles from source on every push)
+- [x] Test suite green — 14/14, run against the real Compact runtime
+- [x] CI green — contract job (compile + typecheck + test) and frontend job (typecheck + build)
+- [x] Contract deployed on Midnight Preview — `a234fcd8498a793f498185cc35a2e29c4145d3cc61bdd0341eefbab887bfbca3`, verified via the public indexer
+- [x] Managed artifacts committed — circuits + prover/verifier keys + ZKIR under `src/managed/trien/`
+- [x] Live dApp — [midnight-rust-psi.vercel.app](https://midnight-rust-psi.vercel.app), redeployed on every push
+- [x] Demo video — [youtu.be/5gKaCGEMLYc](https://youtu.be/5gKaCGEMLYc)
+
+---
+
+## What's real vs pending — the honesty table
+
+| Feature | Status | Detail |
+|---|---|---|
+| Contract deployed | ✅ Real | `a234fcd8…bca3` on Midnight Preview; indexer returns live ledger state |
+| Four circuits + keys + ZKIR | ✅ Real | Committed under `src/managed/trien/`, CI-reproducible from `trien.compact` |
+| Contract tests | ✅ Real | 14/14 passing against the Compact runtime |
+| Live dApp | ✅ Real | Vercel, editorial page + Lace connect + hold-to-reveal instrument |
+| Lace connect / network guard | ✅ Real | Connect + forget-session; refuses a wallet on the wrong network |
+| dApp circuit calls | ⚠️ Needs funded wallet | The instrument runs; an end-to-end proof tx needs tDust in Lace on Preview |
+| Demo video | ⚠️ Pre-deployment | Recorded before the registry went live — shows the instrument and reveal, not a circuit tx |
+| Source verification | 🟡 N/A | Midnight Preview has no public source verifier; CI compile-from-source is the check |
+| Protocol audit | ⚠️ Unaudited | Compact and Midnight Preview are beta infrastructure |
+
+---
+
+## Tests
+
+The suite runs the circuits through the real Compact runtime — the same interpreter the chain uses, minus proof generation — so every `assert` in the contract fires exactly as it would on Preview. It covers the operator checks, the membership proof, double-spend rejection, cross-verifier unlinkability, and each of the three things revocation has to do.
+
+```
+ RUN  v2.1.9 /home/arch/midnightzks/contract
+
+ ✓ src/test/trien.test.ts (14 tests) 1427ms
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+```
+
+---
+
+## Run it locally
+
+Requires **Node 22+**, **Docker** (for the proof server), and the **Compact toolchain**. On Windows, install the toolchain inside WSL — the compiler ships for Linux and macOS only, and Windows has its own unrelated `compact.exe` (the NTFS compression tool) that shadows it on `PATH`.
 
 ```bash
 # 1. Compact toolchain
@@ -193,8 +305,7 @@ npm run dev               # http://localhost:5173
 
 On Windows, step 2's compile is `wsl -d Ubuntu -- bash contract/compile.sh`.
 
-The compiler prints exactly this, and nothing more — it reports the count, not
-the names:
+The compiler prints exactly this — it reports the count, not the names:
 
 ```
 $ compact compile src/trien.compact src/managed/trien
@@ -210,29 +321,22 @@ keys: initialize.prover  initialize.verifier   proveAccess.prover  proveAccess.v
 zkir: initialize.zkir    proveAccess.zkir      register.zkir       revoke.zkir
 ```
 
-![compile output](docs/screenshots/compile.png)
+![compile output](docs/media/3.png)
 
-The same output, as plain text, is in
-[`docs/screenshots/compile-output.txt`](docs/screenshots/compile-output.txt).
+The same output, as plain text, is in [`docs/media/compile-output.txt`](docs/media/compile-output.txt). `src/managed/trien/` holds `contract/` (generated TypeScript), `keys/` (prover and verifier keys per circuit) and `zkir/` (the ZK intermediate representation).
 
-`src/managed/trien/` holds `contract/` (generated TypeScript), `keys/`
-(prover and verifier keys per circuit) and `zkir/` (the ZK intermediate
-representation, in both readable and binary form).
+---
 
-## Deployment
+## Deploy
 
-The proof server must be running first: proving happens locally, because a
-proof server is handed the witness, and sending that to someone else's host
-would give away the secret this design exists to protect.
+The proof server must be running first — proving happens locally, because a proof server is handed the witness:
 
 ```bash
 docker run -d --rm -p 6300:6300 --name midnight-proof-server \
   midnightnetwork/proof-server -- 'midnight-proof-server --num-workers 4'
 ```
 
-Note the flag. The published image no longer accepts the `--network preview`
-argument that older instructions pass; it exits immediately with
-`error: unexpected argument '--network' found`. Only `--num-workers` remains.
+Note the flag: the published image no longer accepts the `--network preview` argument older instructions pass; it exits immediately with `error: unexpected argument '--network' found`.
 
 ```bash
 cd deploy
@@ -244,198 +348,76 @@ npm run mnemonic          # the same seed as 24 words, for importing into Lace
 npm run deploy            # deploys, then calls initialize
 ```
 
-Deployment is two transactions on purpose. The first puts the circuits and an
-empty ledger on chain; `initialize` then writes the operator commitment into
-`admin`. Keeping them apart means the registry is inert until somebody proves
-they hold the operator secret, rather than the contract trusting whoever
-happened to submit the deployment.
+Deployment is two transactions on purpose. The first puts the circuits and an empty ledger on chain; `initialize` then writes the operator commitment into `admin`. Keeping them apart means the registry is inert until somebody proves they hold the operator secret, rather than the contract trusting whoever happened to submit the deployment.
 
-The result is recorded in `deploy/deployment.json`:
+Funding is the only manual step: the faucet dispenses tNight to the unshielded address, and tNight must be delegated (Lace → **Generate tDust**) before the fee balance is non-zero and `npm run deploy` completes. The result lands in `deploy/deployment.json`:
 
 ```json
 {
   "network": "preview",
-  "contractAddress": "0200…",
+  "contractAddress": "a234fcd8498a793f498185cc35a2e29c4145d3cc61bdd0341eefbab887bfbca3",
   "deployTxId": "…",
   "initializeTxId": "…",
   "operatorCommitment": "…",
-  "deployedAt": "2026-07-31T00:00:00.000Z"
+  "deployedAt": "…"
 }
 ```
 
-### Why the address still says Pending
+---
 
-The pipeline above runs end to end up to the point of needing money, and the
-faucet is where it stops. Both public networks refuse, for different reasons.
-
-**Preprod** returns `{"status":"NOT_SERVING","reason":"SYNC_STUCK_RECOVERY"}`
-from its health endpoint and dispenses nothing at all, which is why this project
-targets Preview instead.
-
-**Preview** is serving (`/health` reports `{"status":"SERVING"}`), and the
-address problem is now solved. The faucet rejected the shielded
-`mn_shield-addr_test1…` form because it wants the *unshielded* Night address,
-and that address does derive cleanly — `signatureVerifyingKey()` refuses raw
-HD bytes, but `signingKeyFromBip340()` converts them first:
+## Project layout
 
 ```
-seed → HDWallet.fromSeed → selectRole(Roles.NightExternal) → deriveKeyAt(0)
-     → signingKeyFromBip340 → signatureVerifyingKey → addressFromKey
-     → UnshieldedAddress → MidnightBech32m.encode  → mn_addr_preview1…
+contract/
+  src/trien.compact          the contract (4 circuits)
+  src/index.ts               what consumers import
+  src/witnesses.ts           witness implementations (local, never sent)
+  src/types.ts               private state
+  src/test/simulator.ts      runs circuits against the real Compact runtime
+  src/test/trien.test.ts     the test suite (14 tests)
+  src/managed/trien/         compiler output: circuits, keys, ZKIR
+  compile.sh                 compiles via WSL on Windows
+deploy/
+  src/new-wallet.ts          generates a throwaway seed
+  src/address.ts             prints the address and balance
+  src/unshielded-address.ts  derives the unshielded Night address (faucet form)
+  src/deploy.ts              deploys, then binds the operator
+  src/providers.ts           compiled-contract binding + providers
+  src/zk-config.ts           serves ZK artifacts from disk
+frontend/
+  src/App.tsx                the page
+  src/Plate.tsx              the allowlist, drawn
+  src/lib/lace.ts            wallet connect / disconnect
+docs/media/                  README screenshots (1.png, 2.png, 3.png, compile-output.txt)
+.github/workflows/ci.yml     compile + typecheck + test on every push
+vercel.json                  build config for the deployed dApp
 ```
 
-That is what `npm run unshielded` prints (`deploy/src/unshielded-address.ts`).
+---
 
-The remaining blocker is a different one, and it is a real gap in the SDK
-rather than a mistake here. **Funding is two steps, and only the first is
-scriptable.** The faucet dispenses tNight to the unshielded address; tNight
-then has to be *delegated* to generate the tDust that actually pays fees.
-Holding tNight alone produces nothing. Delegation has no headless API in
-`@midnight-ntwrk/wallet` 5.0.0 — the state object it emits carries shielded
-Zswap fields only:
+## Tech stack
 
-```
-address  addressLegacy  availableCoins  balances  coinPublicKey  coinPublicKeyLegacy
-coins  encryptionPublicKey  encryptionPublicKeyLegacy  nullifiers  pendingCoins
-transactionHistory  syncProgress
-```
+| Layer | Technology |
+|---|---|
+| Contract | Compact 0.23 (`pragma language_version 0.23`), compiler 0.5.1, `@midnight-ntwrk/compact-runtime` 0.16.0 |
+| Chain | Midnight Preview |
+| Frontend | React 18, Vite 6, TypeScript, Tailwind 4, motion, Lenis |
+| Wallet | Lace via `@midnight-ntwrk/dapp-connector-api` 4.0.1 |
+| Integration | `@midnight-ntwrk/midnight-js-*` 4.1.1 (contracts, proof provider, indexer data, private state) |
+| Deploy | `@midnight-ntwrk/wallet` 5.0.0 |
+| Tests | Vitest 2.1, simulator against the real Compact runtime |
+| CI | GitHub Actions, Node 22 |
 
-No Night field, no Dust field, no delegation call. The indexer exposes no
-unshielded-UTXO-by-address query either, and the node RPC offers only
-`midnight_ledgerStateRoot` / `midnight_contractState`, so a headless client
-cannot even *observe* the tNight it was sent. 5.0.0 is the latest published
-version, so there is no upgrade to reach for.
+---
 
-The practical route is therefore Lace, for the delegation step specifically.
-`npm run mnemonic` prints the deploy seed as the 24 words Lace imports —
-Midnight's seed convention is BIP39 entropy, so the hex in `.env` and the phrase
-are the same secret in two encodings, which keeps the operator credential in
-`wallet.ts` stable across the hand-off. In Lace, on Preview: request tNight,
-then use **Generate tDust** to delegate it. The moment `npm run address` reports
-a non-zero fee balance, `npm run deploy` completes and the address lands in
-`deployment.json`.
+## Roadmap
 
-A note on networks, because it cost real time: the `testnet-02` endpoints this
-project started against no longer resolve, and the indexer's GraphQL path moved
-to `/api/v3/graphql`. A wrong endpoint fails silently — the wallet still builds
-and still prints a correct address, because the address derives locally from the
-seed, and simply never syncs. The symptom looks like an empty wallet rather than
-a bad URL.
+- **Multiple issuers** — an issuer registry lets a DAO, a university and an employer each hold their own subtree and their own revocation epoch; a verifier declares which issuers it trusts, and the proof carries an issuer index without leaking which specific credential was used beyond that set.
+- **Time- and role-bound credentials** — expiry and role fields in the leaf preimage, so the circuit asserts the claimed role matches what the verifier asked for and that the current block time is under expiry. The user still never reveals which leaf they are.
+- **Reusable across dApps** — because the nullifier already takes a verifier id as input, one credential can be presented to many apps without any of them linking the presentations. Wrapping the verify call in a small TypeScript SDK would let any Midnight dApp drop it in.
 
-## Tests
+---
 
-```
-$ npm test
+## License
 
- ✓ src/test/trien.test.ts (14 tests) 571ms
-
- Test Files  1 passed (1)
-      Tests  14 passed (14)
-```
-
-The suite runs the circuits through the real Compact runtime — the same
-interpreter the chain uses, minus proof generation — so every `assert` in the
-contract fires exactly as it would on Preprod. It covers the operator checks,
-the membership proof, double-spend rejection, cross-verifier unlinkability, and
-each of the three things revocation has to do.
-
-## The dApp
-
-![the dApp — the public view](docs/screenshots/dapp.jpg)
-
-Holding "reveal what happened" traces the proof back to the leaf it came from —
-the view the chain never gets:
-
-![the dApp — revealed](docs/screenshots/dapp-revealed.jpg)
-
-The page does one thing, because the product is one thing. It connects Lace,
-reports what the wallet told it, and says plainly what that does and does not
-reveal. Live at **https://midnight-rust-psi.vercel.app**, redeployed by Vercel
-on every push to `master`.
-
-Connect and disconnect are honest about their limits. The DApp connector API
-has no revoke method — permission lives in the extension, and only the user can
-withdraw it there — so the button says "forget this session" rather than
-implying a revocation that did not happen.
-
-The dApp also refuses to proceed if the wallet reports a different network than
-it was built for, rather than letting anyone sign against the wrong chain by
-accident.
-
-## Progress against the challenge
-
-**Level 1 — New Moon**
-
-- [x] Toolchain installed; contract compiles via `compact compile`
-- [x] Passing test suite (14 tests)
-- [x] `managed/` present (circuits + keys + ZKIR)
-- [x] Public GitHub repository with README and setup instructions
-- [x] Screenshot of successful compile output
-- [x] README section explaining public state vs private witness
-- [x] Initial product idea paragraph
-- [x] Minimum 5 meaningful commits (25)
-
-**Level 2 — Waxing Crescent**
-
-- [x] Lace wallet connect / disconnect implemented
-- [x] Live demo link
-- [x] README documenting the privacy claim
-- [x] Minimum 8 meaningful commits (25)
-- [ ] Deployed contract with a verifiable address — blocked, see [why](#why-the-address-still-says-pending)
-- [x] Demo video: wallet connect + a successful circuit call — [https://youtu.be/5gKaCGEMLYc](https://youtu.be/5gKaCGEMLYc)
-
-**Level 3 — First Quarter**
-
-- [x] Approved idea from the provided list (Private Allowlist Access)
-- [x] 3+ tests passing (14)
-- [x] CI/CD pipeline running, with badges above
-- [x] README "privacy model" section: what an observer can and cannot learn
-- [x] Minimum 10 meaningful commits (25)
-- [x] Demo video (1 minute) showing full functionality — [https://youtu.be/5gKaCGEMLYc](https://youtu.be/5gKaCGEMLYc)
-
-**Level 4 — Waxing Gibbous**
-
-- [x] MVP live
-- [x] Documentation: README, setup, usage
-- [x] CI/CD running on the product repo
-- [x] Minimum 15 meaningful commits (25)
-- [ ] Verifiable contract address — blocked, see [why](#why-the-address-still-says-pending)
-- [x] Product X profile, linked here: [@Auditflow5599](https://x.com/Auditflow5599)
-- [x] Demo video of the MVP — [https://youtu.be/5gKaCGEMLYc](https://youtu.be/5gKaCGEMLYc)
-
-Only the contract address is outstanding, and it is a live blocker rather than
-unfinished work: the deployment pipeline is written and runs end to end up to
-the point of needing funds. See [Why the address still says Pending](#why-the-address-still-says-pending).
-
-## Where this goes next
-
-Three things, in the order they unlock value:
-
-**Multiple issuers.** Today there is one operator commitment. An issuer registry
-would let a DAO, a university and an employer each hold their own subtree and
-their own revocation epoch. A verifier then declares which issuers it trusts,
-and the proof carries an issuer index without leaking which specific credential
-was used beyond that set.
-
-**Time- and role-bound credentials.** Adding expiry and role fields to the leaf
-preimage — so the leaf becomes a hash over secret, role and expiry — lets the
-circuit assert that the claimed role matches what the verifier asked for and
-that the current block time is under expiry. The user still never reveals which
-leaf they are.
-
-**Reusable across dApps.** Because the nullifier already takes a verifier id as
-input, one credential can be presented to many apps without any of them linking
-the presentations. Wrapping that into a small TypeScript SDK would let any
-Midnight dApp drop in a verify call.
-
-## A note on a bug that mattered
-
-The first version of `register` used `members.insertHash(commitment)`, which
-writes the commitment into the tree verbatim. But `proveAccess` validates a path
-with `merkleTreePathRoot()`, which applies `leafHash()` to the leaf before
-folding upward. The two disagreed, so `checkRoot()` rejected every honestly
-constructed proof: the contract compiled, would have deployed, and could never
-have admitted anybody. Switching to `members.insert()` — which stores
-`leafHash(commitment)` — fixed it. The test suite exists partly because this
-class of mistake is invisible until something actually tries to prove
-membership.
+MIT — built for the Midnight challenge, 2026.
