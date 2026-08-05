@@ -9,7 +9,7 @@
 | --- | --- |
 | Live dApp | https://midnight-rust-psi.vercel.app |
 | Network | Midnight Preview |
-| Contract address | `a234fcd8498a793f498185cc35a2e29c4145d3cc61bdd0341eefbab887bfbca3` |
+| Preview Contract address | `a234fcd8498a793f498185cc35a2e29c4145d3cc61bdd0341eefbab887bfbca3` |
 | Source | https://github.com/Venkat5599/mn |
 | Follow | [@Auditflow5599](https://x.com/Auditflow5599) |
 | Demo video | https://youtu.be/5gKaCGEMLYc |
