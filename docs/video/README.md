@@ -33,11 +33,13 @@ A run that covers Level 2, in order:
    the address, the network and the proof server the wallet reported.
 4. Click **Forget this session**, and point out that it forgets rather than
    revokes — permission lives in Lace, and only the user can withdraw it.
-5. Once the registry is deployed, call a circuit and show the nullifier landing
-   on chain while the caller stays unidentified.
+5. Call a circuit and show the nullifier landing on chain while the caller
+   stays unidentified.
 
-Step 5 needs a funded wallet. Until then the contract address is `Pending`,
-which the challenge explicitly allows.
+Step 5 needs a funded wallet. The registry is live on Preview at
+`a234fcd8498a793f498185cc35a2e29c4145d3cc61bdd0341eefbab887bfbca3` — the
+address is no longer pending. What the recording still lacks is the
+wallet-connected circuit call, which is the only part that needs money.
 
 ## The recording
 
@@ -47,8 +49,9 @@ different leaf up to the root while the caption flips between the public view
 and the one the chain never gets.
 
 It does **not** show wallet connect or a circuit call, because it was captured
-from an automated browser with no Lace extension and against a registry that is
-not yet deployed. Those two shots are what the Level 2 recording still needs.
+from an automated browser with no Lace extension and no funded wallet. Those
+two shots are what the Level 2 recording still needs — the registry itself is
+live and proving against it only needs tDust.
 
 Recordings are committed here rather than ignored, so the demo travels with the
 repository.
