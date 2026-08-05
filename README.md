@@ -11,6 +11,7 @@
 ![Stack](https://img.shields.io/badge/React%2018%20·%20Vite%206%20·%20TypeScript-1f1f23)
 ![Compact](https://img.shields.io/badge/Compact%200.23-4f46e5)
 ![Midnight](https://img.shields.io/badge/Midnight-Preview-34d399)
+[![License: MIT](https://img.shields.io/badge/license-MIT-34d399.svg)](LICENSE)
 
 ### Prove you're on the list. Nobody learns who you are.
 
@@ -20,7 +21,7 @@ Triện is an on-chain allowlist where membership is a zero-knowledge claim. An 
 
 **[ Live dApp ↗ ](https://midnight-rust-psi.vercel.app)** · **[ Demo video ↗ ](https://youtu.be/5gKaCGEMLYc)** · **[ How it works ↓ ](#how-it-works)** · **[ Run it locally ↓ ](#run-it-locally)**
 
-Built for the Midnight challenge — Private Allowlist Access (Level 3).
+Built for the Midnight challenge — Private Allowlist Access (Level 3). MIT licensed.
 
 </div>
 
@@ -47,6 +48,7 @@ Built for the Midnight challenge — Private Allowlist Access (Level 3).
 - [Project layout](#project-layout)
 - [Tech stack](#tech-stack)
 - [Roadmap](#roadmap)
+- [License](#license)
 
 ---
 
@@ -413,3 +415,9 @@ vercel.json                  build config for the deployed dApp
 - **Multiple issuers** — an issuer registry lets a DAO, a university and an employer each hold their own subtree and their own revocation epoch; a verifier declares which issuers it trusts, and the proof carries an issuer index without leaking which specific credential was used beyond that set.
 - **Time- and role-bound credentials** — expiry and role fields in the leaf preimage, so the circuit asserts the claimed role matches what the verifier asked for and that the current block time is under expiry. The user still never reveals which leaf they are.
 - **Reusable across dApps** — because the nullifier already takes a verifier id as input, one credential can be presented to many apps without any of them linking the presentations. Wrapping the verify call in a small TypeScript SDK would let any Midnight dApp drop it in.
+
+---
+
+## License
+
+MIT — built for the Midnight challenge, 2026.
