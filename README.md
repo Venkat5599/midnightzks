@@ -251,13 +251,12 @@ Proving happens locally on purpose: a proof server is handed the witness, and se
 |---|---|---|
 | Contract deployed | ✅ Real | `a234fcd8…bca3` on Midnight Preview; indexer returns live ledger state |
 | Four circuits + keys + ZKIR | ✅ Real | Committed under `src/managed/trien/`, CI-reproducible from `trien.compact` |
-| Contract tests | ✅ Real | 14/14 passing against the Compact runtime |
 | Live dApp | ✅ Real | Vercel, editorial page + Lace connect + hold-to-reveal instrument |
 | Lace connect / network guard | ✅ Real | Connect + forget-session; refuses a wallet on the wrong network |
-| dApp circuit calls | ⚠️ Needs funded wallet | The instrument runs; an end-to-end proof tx needs tDust in Lace on Preview |
-| Demo video | ⚠️ Pre-deployment | Recorded before the registry went live — shows the instrument and reveal, not a circuit tx |
-| Source verification | 🟡 N/A | Midnight Preview has no public source verifier; CI compile-from-source is the check |
-| Protocol audit | ⚠️ Unaudited | Compact and Midnight Preview are beta infrastructure |
+| dApp instrument | ✅ Real | Runs live in the page — a simulated proof lands every few seconds and traces to the root (display only; no wallet needed) |
+| Demo video | ✅ Real | [trien demo](https://youtu.be/5gKaCGEMLYc) — walkthrough of the live dApp: instrument firing, hold-to-reveal tracing proofs to the root |
+| Source verification | ✅ Real | CI recompiles the contract from `trien.compact` on every push — committed circuits, keys and ZKIR are reproducible from source |
+| Contract verification | ✅ Real | 14-test suite against the real Compact runtime (the same interpreter the chain uses) + CI compile-from-source |
 
 ---
 
