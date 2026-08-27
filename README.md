@@ -5,17 +5,17 @@
 &nbsp;
 
 [![Live demo](https://img.shields.io/badge/●_live-midnight--rust--psi.vercel.app-34d399)](https://midnight-rust-psi.vercel.app)
-![Preview: contract](https://img.shields.io/badge/📜_Preview-a234fcd8…-14151a)
+![Preprod: contract](https://img.shields.io/badge/📜_Preprod-25b6851f…-14151a)
 [![CI](https://github.com/Venkat5599/midnightzks/actions/workflows/ci.yml/badge.svg)](https://github.com/Venkat5599/midnightzks/actions/workflows/ci.yml)
 ![Tests](https://img.shields.io/badge/tests-14%20passing-3fb950)
 ![Stack](https://img.shields.io/badge/React%2018%20·%20Vite%206%20·%20TypeScript-1f1f23)
 ![Compact](https://img.shields.io/badge/Compact%200.23-4f46e5)
-![Midnight](https://img.shields.io/badge/Midnight-Preview-34d399)
+![Midnight](https://img.shields.io/badge/Midnight-Preprod-34d399)
 [![License: MIT](https://img.shields.io/badge/license-MIT-34d399.svg)](LICENSE)
 
 ### Prove you're on the list. Nobody learns who you are.
 
-Triện is an on-chain allowlist where membership is a zero-knowledge claim. An operator issues commitments; members prove they are on the list without revealing which member they are; revocation locks a member out immediately — and kills the proofs they already hold. Built in Compact on Midnight Preview, the one chain where the allowlist can sit on chain while membership stays private.
+Triện is an on-chain allowlist where membership is a zero-knowledge claim. An operator issues commitments; members prove they are on the list without revealing which member they are; revocation locks a member out immediately — and kills the proofs they already hold. Built in Compact on Midnight Preprod, the one chain where the allowlist can sit on chain while membership stays private.
 
 ### ▶ Live now — the instrument runs at **[midnight-rust-psi.vercel.app](https://midnight-rust-psi.vercel.app)**
 
@@ -54,16 +54,16 @@ Built for the Midnight challenge — Private Allowlist Access (Level 3). MIT lic
 
 ## ▶ See it in one command
 
-The registry is live on Midnight Preview. The public indexer returns its state right now:
+The registry is live on Midnight Preprod. The public indexer returns its state right now:
 
 ```bash
-$ curl -s -X POST https://indexer.preview.midnight.network/api/v3/graphql \
+$ curl -s -X POST https://indexer.preprod.midnight.network/api/v4/graphql \
     -H 'content-type: application/json' \
-    -d '{"query":"{ contract(address: \"a234fcd8498a793f498185cc35a2e29c4145d3cc61bdd0341eefbab887bfbca3\") { state } }"}'
-{"data":{"contract":{"state":"6d69646e696768743a636f6e74726163742d73746174655b76365d3a70…"}}}
+    -d '{"query":"{ contractAction(address: \"25b6851f398827f7d84729e63d1cb96ae271af2c63af51d725720a30a5aa6414\") { address state transaction { hash } } }"}'
+{"data":{"contractAction":{"address":"25b6851f398827f7d84729e63d1cb96ae271af2c63af51d725720a30a5aa6414","state":"6d69646e696768743a636f6e74726163742d73746174655b76365d3ac4…","transaction":{"hash":"905a0e9959473c47583279cc3544ea27e2f0b302dcbc06070747fdb9cb919713"}}}}
 ```
 
-The state blob carries the ledger: a Merkle tree of member commitments, a set of spent nullifiers, an epoch counter and an access counter. Zero identities.
+`contractAction` resolving to `ContractDeploy` with a non-empty state blob (`midnight:contract-state[v6]:…`) is the on-chain proof. The state blob carries the ledger: a Merkle tree of member commitments, a set of spent nullifiers, an epoch counter and an access counter. Zero identities.
 
 The four circuits compile from source, and the suite that exercises them passes:
 
@@ -238,7 +238,7 @@ Proving happens locally on purpose: a proof server is handed the witness, and se
 - [x] Contract compiles — 4 circuits via `compact compile` (CI recompiles from source on every push)
 - [x] Test suite green — 14/14, run against the real Compact runtime
 - [x] CI green — contract job (compile + typecheck + test) and frontend job (typecheck + build)
-- [x] Contract deployed on Midnight Preview — `a234fcd8498a793f498185cc35a2e29c4145d3cc61bdd0341eefbab887bfbca3`, verified via the public indexer
+- [x] Contract deployed on Midnight Preprod — `25b6851f398827f7d84729e63d1cb96ae271af2c63af51d725720a30a5aa6414`, verified via the public indexer (deposit tx `905a0e99…9713`, block 2275175)
 - [x] Managed artifacts committed — circuits + prover/verifier keys + ZKIR under `src/managed/trien/`
 - [x] Live dApp — [midnight-rust-psi.vercel.app](https://midnight-rust-psi.vercel.app), redeployed on every push
 - [x] Demo video — [youtu.be/5gKaCGEMLYc](https://youtu.be/5gKaCGEMLYc)
@@ -249,14 +249,16 @@ Proving happens locally on purpose: a proof server is handed the witness, and se
 
 | Feature | Status | Detail |
 |---|---|---|
-| Contract deployed | ✅ Real | `a234fcd8…bca3` on Midnight Preview; indexer returns live ledger state |
+| Contract deployed | ✅ Real | `25b6851f…6414` on Midnight Preprod; indexer returns live ledger state (tx `905a0e99…9713`, block 2275175) |
 | Four circuits + keys + ZKIR | ✅ Real | Committed under `src/managed/trien/`, CI-reproducible from `trien.compact` |
 | Live dApp | ✅ Real | Vercel, editorial page + Lace connect + hold-to-reveal instrument |
 | Lace connect / network guard | ✅ Real | Connect + forget-session; refuses a wallet on the wrong network |
-| dApp instrument | ✅ Real | Runs live in the page — a simulated proof lands every few seconds and traces to the root (display only; no wallet needed) |
-| Demo video | ✅ Real | [trien demo](https://youtu.be/5gKaCGEMLYc) — walkthrough of the live dApp: instrument firing, hold-to-reveal tracing proofs to the root |
-| Source verification | ✅ Real | CI recompiles the contract from `trien.compact` on every push — committed circuits, keys and ZKIR are reproducible from source |
-| Contract verification | ✅ Real | 14-test suite against the real Compact runtime (the same interpreter the chain uses) + CI compile-from-source |
+| Contract tests | ✅ Real | 14/14 passing against the Compact runtime |
+| Operator binding (`initialize`) | 🟡 Pending | Deploy tx landed; `initialize` circuit call fails with the known SDK `ContractRuntimeError` (proof-server 8.1.0 vs compact 0.23 `callTx` mismatch) — retry via the Lace/dApp frontend path |
+| dApp circuit calls | 🟡 Pending | The instrument runs; a real end-to-end proof tx needs the operator bound + tDust in Lace on Preprod |
+| Demo video | 🟡 Pre-operator | Registered before the operator binding; shows the instrument and reveal, not a circuit tx |
+| Source verification | 🟡 N/A | Midnight has no public source verifier; CI compile-from-source is the check |
+| Protocol audit | 🟡 Unaudited | Compact and Midnight are beta infrastructure |
 
 ---
 
@@ -349,18 +351,21 @@ npm run deploy            # deploys, then calls initialize
 
 Deployment is two transactions on purpose. The first puts the circuits and an empty ledger on chain; `initialize` then writes the operator commitment into `admin`. Keeping them apart means the registry is inert until somebody proves they hold the operator secret, rather than the contract trusting whoever happened to submit the deployment.
 
-Funding is the only manual step: the faucet dispenses tNight to the unshielded address, and tNight must be delegated (Lace → **Generate tDust**) before the fee balance is non-zero and `npm run deploy` completes. The result lands in `deploy/deployment.json`:
+Funding is the only manual step: the faucet dispenses tNight to the unshielded address, and tNight must be registered for Dust generation (Lace → **Generate tDust**, or `npm run register`) before the fee balance is non-zero and `npm run deploy` completes. The result lands in `deploy/deployment.json`:
 
 ```json
 {
-  "network": "preview",
-  "contractAddress": "a234fcd8498a793f498185cc35a2e29c4145d3cc61bdd0341eefbab887bfbca3",
-  "deployTxId": "…",
-  "initializeTxId": "…",
-  "operatorCommitment": "…",
-  "deployedAt": "…"
+  "network": "preprod",
+  "contractAddress": "25b6851f398827f7d84729e63d1cb96ae271af2c63af51d725720a30a5aa6414",
+  "deployTxId": "00831f71a6ba73f9307658d7563591fe7af3678d7abb52f561968ae81b6bf66689",
+  "initializeTxId": "",
+  "operatorCommitment": "5eb12ffca38329257502a6c28a94e709715410b5f71849fb0a4b9765a91ea48d",
+  "deployedAt": "2026-08-26T17:00:38.154Z",
+  "deployer": "mn_addr_preprod1qcksqwt5sn4ez8c56m0kgpfr3fg30vp3yjlxp7w3rtajf3lk89xsumapld"
 }
 ```
+
+The `initializeTxId` is empty on purpose — the operator binding is the one step still pending (backend `callTx` hits the documented SDK `ContractRuntimeError`; the frontend/Lace path is the way to complete it).
 
 ---
 
@@ -399,7 +404,7 @@ vercel.json                  build config for the deployed dApp
 | Layer | Technology |
 |---|---|
 | Contract | Compact 0.23 (`pragma language_version 0.23`), compiler 0.5.1, `@midnight-ntwrk/compact-runtime` 0.16.0 |
-| Chain | Midnight Preview |
+| Chain | Midnight Preprod |
 | Frontend | React 18, Vite 6, TypeScript, Tailwind 4, motion, Lenis |
 | Wallet | Lace via `@midnight-ntwrk/dapp-connector-api` 4.0.1 |
 | Integration | `@midnight-ntwrk/midnight-js-*` 4.1.1 (contracts, proof provider, indexer data, private state) |
