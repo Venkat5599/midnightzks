@@ -14,14 +14,14 @@
  * reports: `lib/lace.ts` refuses a session whose `networkId` differs, rather
  * than letting anyone sign against the wrong chain by accident.
  */
-export const NETWORK_ID: string = import.meta.env.VITE_NETWORK_ID ?? 'preview';
+export const NETWORK_ID: string = import.meta.env.VITE_NETWORK_ID ?? 'preprod';
 
 export const FALLBACK_INDEXER_URI: string =
-  import.meta.env.VITE_INDEXER_URI ?? 'https://indexer.preview.midnight.network/api/v3/graphql';
+  import.meta.env.VITE_INDEXER_URI ?? 'https://indexer.preprod.midnight.network/api/v4/graphql';
 
 export const FALLBACK_INDEXER_WS_URI: string =
   import.meta.env.VITE_INDEXER_WS_URI ??
-  'wss://indexer.preview.midnight.network/api/v3/graphql/ws';
+  'wss://indexer.preprod.midnight.network/api/v4/graphql/ws';
 
 /**
  * Proving runs locally by default. Sending a witness to someone else's proof
