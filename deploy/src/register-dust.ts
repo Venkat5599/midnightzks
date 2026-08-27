@@ -4,8 +4,30 @@ import {
   ZswapSecretKeys,
 } from '@midnight-ntwrk/ledger-v8';
 import { firstValueFrom } from 'rxjs';
+import { WebSocket as WsNative } from 'ws';
 import { DustWallet } from '@midnight-ntwrk/wallet-sdk-dust-wallet';
 import { WalletFacade } from '@midnight-ntwrk/wallet-sdk-facade';
+import { NoOpTransactionHistoryStorage } from '@midnight-ntwrk/wallet-sdk-abstractions';
+
+// Preprod RPC closes idle WebSocket connections after ~30-60s. Ping every 10s
+// so the wallet SDK doesn't drop mid-sync and restart from scratch.
+const proto = (WsNative as any).prototype;
+const origOn = proto.on;
+proto.on = function (event: string, listener: any) {
+  if (event === 'open') {
+    const ws = this;
+    return origOn.call(this, event, function (this: any, ...args: any[]) {
+      const interval = setInterval(() => {
+        if (ws.readyState === 1) try { ws.ping(); } catch {}
+        else clearInterval(interval);
+      }, 10000);
+      ws.on('close', () => clearInterval(interval));
+      return listener.apply(this, args);
+    });
+  }
+  return origOn.call(this, event, listener);
+};
+(globalThis as any).WebSocket = WsNative;
 import { HDWallet, Roles } from '@midnight-ntwrk/wallet-sdk-hd';
 import { ShieldedWallet } from '@midnight-ntwrk/wallet-sdk-shielded';
 import {
@@ -80,7 +102,8 @@ const main = async (): Promise<void> => {
     // How many blocks of Dust generation to budget for the fee. Required by the
     // Dust wallet's transacting capability; without it `calculateFee` throws on
     // `feeBlocksMargin` before any transaction is built.
-    costParameters: { feeBlocksMargin: 10 },
+    costParameters: { additionalFeeOverhead: 300_000_000_000_000n, feeBlocksMargin: 5 },
+    txHistoryStorage: new NoOpTransactionHistoryStorage(),
   };
 
   const facade = await WalletFacade.init({
