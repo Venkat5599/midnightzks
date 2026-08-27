@@ -31,7 +31,7 @@ jobs:
 
       - name: Select the compiler version
         run: |
-          compact update
+          compact update 0.31.1
           compact --version
           compact compile --version
 
