@@ -61,7 +61,7 @@ export const feeBalance = (state: { balances: Record<string, bigint> }): bigint 
  * plainly what is missing. The wallet emits state continuously while it syncs,
  * so this filters that stream rather than polling.
  */
-export const awaitFunds = async (wallet: Wallet, timeoutMs = 300_000): Promise<bigint> => {
+export const awaitFunds = async (wallet: Wallet, timeoutMs = 3_600_000): Promise<bigint> => {
   console.log(`Syncing with ${NETWORK_ID} and waiting for a funded balance…`);
   const state = await firstValueFrom(
     wallet.state().pipe(
