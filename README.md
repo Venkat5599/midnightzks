@@ -367,6 +367,8 @@ Funding is the only manual step: the faucet dispenses tNight to the unshielded a
 
 The `initializeTxId` is empty on purpose — the operator binding is the one step still pending (backend `callTx` hits the documented SDK `ContractRuntimeError`; the frontend/Lace path is the way to complete it).
 
+The verbatim deploy run, plus the independent indexer check, is in [`docs/media/deploy-output.txt`](docs/media/deploy-output.txt).
+
 ---
 
 ## Project layout
@@ -392,7 +394,7 @@ frontend/
   src/App.tsx                the page
   src/Plate.tsx              the allowlist, drawn
   src/lib/lace.ts            wallet connect / disconnect
-docs/media/                  README screenshots (1.png, 2.png, 3.png, compile-output.txt)
+docs/media/                  README screenshots (1.png, 2.png, 3.png, compile-output.txt, deploy-output.txt)
 .github/workflows/ci.yml     compile + typecheck + test on every push
 vercel.json                  build config for the deployed dApp
 ```
