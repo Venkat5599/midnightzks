@@ -1,0 +1,55 @@
+---
+network: preprod
+contract address: 25b6851f398827f7d84729e63d1cb96ae271af2c63af51d725720a30a5aa6414
+deploy tx: 00831f71a6ba73f9307658d7563591fe7af3678d7abb52f561968ae81b6bf66689
+indexer deploy hash: 905a0e9959473c47583279cc3544ea27e2f0b302dcbc06070747fdb9cb919713 (block 2275175)
+deployed at: 2026-08-26T17:00:38.154Z
+deployer: mn_addr_preprod1qcksqwt5sn4ez8c56m0kgpfr3fg30vp3yjlxp7w3rtajf3lk89xsumapld
+---
+
+Verbatim output of the preprod deploy run (headless wallet SDK 1.2.0 env, proof-server 8.1.0):
+
+=== Deploy Triện to preprod (SDK 1.2.0 env) ===
+
+--- Wallet setup ---
+Restored 3/3 child wallets from saved state
+Syncing with network (unshielded + dust; shielded skipped)...
+  synced.
+Wallet: mn_addr_preprod1qcksqwt5sn4ez8c56m0kgpfr3fg30vp3yjlxp7w3rtajf3lk89xsumapld
+tNIGHT balance: 2,000,000,000
+
+--- DUST token setup ---
+Registering 2 NIGHT UTXOs for DUST...
+DUST registration submitted
+
+--- Proof server ---
+Proof server ready
+
+=== CONTRACT DEPLOYED ===
+Address: 25b6851f398827f7d84729e63d1cb96ae271af2c63af51d725720a30a5aa6414
+Deploy tx: 00831f71a6ba73f9307658d7563591fe7af3678d7abb52f561968ae81b6bf66689
+
+--- initialize (bind operator) ---
+initialize failed (contract is still deployed — operator binding can be retried):
+Unexpected error executing scoped transaction '<unnamed>': ContractRuntimeError:
+Error executing circuit 'initialize'
+  (known SDK limitation: backend callTx vs proof-server 8.1.0 / compact 0.23;
+   the Lace/dApp frontend path does not hit it)
+
+--- DONE ---
+{
+  "network": "preprod",
+  "contractAddress": "25b6851f398827f7d84729e63d1cb96ae271af2c63af51d725720a30a5aa6414",
+  "deployTxId": "00831f71a6ba73f9307658d7563591fe7af3678d7abb52f561968ae81b6bf66689",
+  "initializeTxId": "",
+  "operatorCommitment": "5eb12ffca38329257502a6c28a94e709715410b5f71849fb0a4b9765a91ea48d",
+  "deployedAt": "2026-08-26T17:00:38.154Z",
+  "deployer": "mn_addr_preprod1qcksqwt5sn4ez8c56m0kgpfr3fg30vp3yjlxp7w3rtajf3lk89xsumapld"
+}
+
+Independent on-chain verification (public indexer, no wallet):
+
+$ curl -s -X POST https://indexer.preprod.midnight.network/api/v4/graphql \
+    -H 'content-type: application/json' \
+    -d '{"query":"{ contractAction(address: \"25b6851f398827f7d84729e63d1cb96ae271af2c63af51d725720a30a5aa6414\") { address state transaction { hash } } }"}'
+{"data":{"contractAction":{"address":"25b6851f398827f7d84729e63d1cb96ae271af2c63af51d725720a30a5aa6414","state":"6d69646e696768743a636f6e74726163742d73746174655b76365d3ac4…","transaction":{"hash":"905a0e9959473c47583279cc3544ea27e2f0b302dcbc06070747fdb9cb919713"}}}}
