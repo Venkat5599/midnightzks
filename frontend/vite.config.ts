@@ -26,6 +26,24 @@ export default defineConfig({
    */
   base: process.env.VITE_BASE ?? '/',
 
+  resolve: {
+    // @trien/contract is a file: dependency whose managed output imports the
+    // Midnight runtime. Without dedupe, Vite resolves that import to the
+    // contract package's OWN node_modules install, whose transitive deps pull
+    // in shims that do not exist there — the build fails with an unresolvable
+    // "vite-plugin-node-polyfills/shims/buffer". Pin every Midnight package to
+    // the frontend's single install.
+    dedupe: [
+      '@midnight-ntwrk/compact-runtime',
+      '@midnight-ntwrk/ledger',
+      '@midnight-ntwrk/onchain-runtime-v3',
+      '@midnight-ntwrk/zswap',
+      '@midnight-ntwrk/midnight-js-contracts',
+      '@midnight-ntwrk/midnight-js-protocol',
+      '@midnight-ntwrk/compact-js',
+    ],
+  },
+
   plugins: [
     react(),
     tailwindcss(),

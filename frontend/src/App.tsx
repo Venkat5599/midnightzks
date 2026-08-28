@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { Plate } from './Plate';
 import { Reveal } from './components/Reveal';
 import { Button } from './components/ui/button';
+import { Instrument } from './components/Instrument';
 import { CONFIGURED_CONTRACT_ADDRESS, NETWORK_ID } from './config';
 import { connectWallet, disconnectWallet, WalletError, type WalletSession } from './lib/lace';
 import { useLenis } from './lib/useLenis';
@@ -266,6 +267,9 @@ export const App = () => {
           </dl>
         </div>
       </section>
+
+      {/* The instrument — real circuit calls. Only available with a session. */}
+      {session !== undefined && <Instrument session={session} />}
 
       {/* Methodology, as the format does it. */}
       <section className="border-t border-hair-soft">
