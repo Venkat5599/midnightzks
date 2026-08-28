@@ -5,17 +5,17 @@
 &nbsp;
 
 [![Live demo](https://img.shields.io/badge/●_live-midnight--rust--psi.vercel.app-34d399)](https://midnight-rust-psi.vercel.app)
-![Preview: contract](https://img.shields.io/badge/📜_Preview-a234fcd8…-14151a)
+![Preprod: contract](https://img.shields.io/badge/📜_Preprod-25b6851f…-34d399)
 [![CI](https://github.com/Venkat5599/midnightzks/actions/workflows/ci.yml/badge.svg)](https://github.com/Venkat5599/midnightzks/actions/workflows/ci.yml)
 ![Tests](https://img.shields.io/badge/tests-14%20passing-3fb950)
 ![Stack](https://img.shields.io/badge/React%2018%20·%20Vite%206%20·%20TypeScript-1f1f23)
 ![Compact](https://img.shields.io/badge/Compact%200.23-4f46e5)
-![Midnight](https://img.shields.io/badge/Midnight-Preview-34d399)
+![Midnight](https://img.shields.io/badge/Midnight-Preprod-34d399)
 [![License: MIT](https://img.shields.io/badge/license-MIT-34d399.svg)](LICENSE)
 
 ### Prove you're on the list. Nobody learns who you are.
 
-Triện is an on-chain allowlist where membership is a zero-knowledge claim. An operator issues commitments; members prove they are on the list without revealing which member they are; revocation locks a member out immediately — and kills the proofs they already hold. Built in Compact on Midnight Preview, the one chain where the allowlist can sit on chain while membership stays private.
+Triện is an on-chain allowlist where membership is a zero-knowledge claim. An operator issues commitments; members prove they are on the list without revealing which member they are; revocation locks a member out immediately — and kills the proofs they already hold. Built in Compact on Midnight Preprod, the one chain where the allowlist can sit on chain while membership stays private.
 
 ### ▶ Live now — the instrument runs at **[midnight-rust-psi.vercel.app](https://midnight-rust-psi.vercel.app)**
 
@@ -54,13 +54,13 @@ Built for the Midnight challenge — Private Allowlist Access (Level 3). MIT lic
 
 ## ▶ See it in one command
 
-The registry is live on Midnight Preview. The public indexer returns its state right now:
+The registry is live on Midnight Preprod. The public indexer returns its state right now:
 
 ```bash
-$ curl -s -X POST https://indexer.preview.midnight.network/api/v3/graphql \
+$ curl -s -X POST https://indexer.preprod.midnight.network/api/v4/graphql \
     -H 'content-type: application/json' \
-    -d '{"query":"{ contract(address: \"a234fcd8498a793f498185cc35a2e29c4145d3cc61bdd0341eefbab887bfbca3\") { state } }"}'
-{"data":{"contract":{"state":"6d69646e696768743a636f6e74726163742d73746174655b76365d3a70…"}}}
+    -d '{"query":"{ contractAction(address: \"25b6851f398827f7d84729e63d1cb96ae271af2c63af51d725720a30a5aa6414\") { address transaction { hash } state } }"}'
+{"data":{"contractAction":{"address":"25b6851f398827f7d84729e63d1cb96ae271af2c63af51d725720a30a5aa6414","transaction":{"hash":"905a0e9959473c47583279cc3544ea27e2f0b302dcbc06070747fdb9cb919713"},"state":"6d69646e696768743a636f6e74726163742d73746174655b76365d3ac4000c04020a00084008040404010408080104…"}}}
 ```
 
 The state blob carries the ledger: a Merkle tree of member commitments, a set of spent nullifiers, an epoch counter and an access counter. Zero identities.
@@ -188,7 +188,7 @@ The one deliberate, stated limit: repeat visits by one member to *one* verifier 
 ```
 Lace wallet ──▶ Triện dApp ──▶ proof server (local, :6300)
    │                │                │
-   │                └──▶ Midnight indexer / node (Preview)
+   │                └──▶ Midnight indexer / node (Preprod)
    │                            │
    │                            └──▶ Triện registry contract
 ```
@@ -214,7 +214,7 @@ Proving happens locally on purpose: a proof server is handed the witness, and se
 | Witness driver | TypeScript (`@trien/contract`) | `memberSecret()` / `memberPath()` — never leave the machine |
 | Proof server | `midnightnetwork/proof-server` | Local proving; witness never sent to a host |
 | dApp | React 18, Vite 6, Lace connector | Connect Lace, run the instrument, hold-to-reveal |
-| Deploy tooling | `@midnight-ntwrk/wallet` 5.0.0 | Seed → unshielded address → tDust → deploy + initialize |
+| Deploy tooling | `@midnight-ntwrk/wallet` 5.0.0 · 1.2.0 (preprod run) | Seed → unshielded address → tDust → deploy; initialize is bound from the dApp |
 | CI | GitHub Actions (Node 22) | Compile from source + typecheck + tests + frontend build |
 
 ---
@@ -229,7 +229,9 @@ Proving happens locally on purpose: a proof server is handed the witness, and se
 
 **4. The proof server runs locally.** A proof server is handed the witness — the secret plus the Merkle path. Pointing the dApp at a hosted server would defeat the design. The dApp defaults to localhost proving and only falls back to a configured server after a wallet reports one.
 
-**5. Funding Preview is two steps, and only one is scriptable.** The faucet dispenses tNight to the *unshielded* Night address, and rejects the shielded form (`mn_shield-addr_test1…`). Deriving it needs `signingKeyFromBip340()` first — `signatureVerifyingKey()` refuses raw HD bytes. Then tNight must be *delegated* to generate the tDust that pays fees, and delegation has no headless API in `@midnight-ntwrk/wallet` 5.0.0. The deploy seed's 24-word mnemonic is handed to Lace for **Generate tDust**, after which `npm run deploy` completes. The endpoints that used to work compound the pain: `testnet-02` no longer resolves and the indexer's GraphQL moved to `/api/v3/graphql` — a wrong endpoint fails silently, because the wallet builds and prints a correct address that simply never syncs.
+**5. Funding preprod is two steps, and only one is scriptable.** The faucet ([midnight-tmnight-preprod.nethermind.dev](https://midnight-tmnight-preprod.nethermind.dev)) dispenses tNight to the *unshielded* Night address and rejects the shielded form (`mn_shield-addr_test1…`). Deriving it needs `signingKeyFromBip340()` first — `signatureVerifyingKey()` refuses raw HD bytes. Then tNight must be *delegated* to generate the tDust that pays fees, and delegation has no headless API in `@midnight-ntwrk/wallet` 5.0.0. The deploy seed's 24-word mnemonic is handed to Lace for **Generate tDust**, after which the deploy completes. The endpoints that used to work compound the pain: `testnet-02` no longer resolves, the proof-server image dropped `--network preview` (`error: unexpected argument '--network' found`), and the preprod indexer's GraphQL lives at `/api/v4/graphql` — a wrong endpoint fails silently, because the wallet builds and prints a correct address that simply never syncs.
+
+**6. Syncing preprod is a memory wall, not a speed problem.** The 5.0.0 facade's sync gate walks *shielded* state over ~1.45M+ preprod blocks; on an 8G VPS it dies a few minutes in at ~19K blocks, past a 5 GB Node heap. The preprod deploy therefore runs the SDK 1.2.0 stack, whose sync gate excludes shielded state — peak ~54 MB through the same chain tip, at the cost of a ~2h first sync. Same contract, same wallet derivation, same seed.
 
 ---
 
@@ -238,7 +240,7 @@ Proving happens locally on purpose: a proof server is handed the witness, and se
 - [x] Contract compiles — 4 circuits via `compact compile` (CI recompiles from source on every push)
 - [x] Test suite green — 14/14, run against the real Compact runtime
 - [x] CI green — contract job (compile + typecheck + test) and frontend job (typecheck + build)
-- [x] Contract deployed on Midnight Preview — `a234fcd8498a793f498185cc35a2e29c4145d3cc61bdd0341eefbab887bfbca3`, verified via the public indexer
+- [x] Contract deployed on Midnight Preprod — `25b6851f398827f7d84729e63d1cb96ae271af2c63af51d725720a30a5aa6414`, deploy tx `905a0e9959473c47583279cc3544ea27e2f0b302dcbc06070747fdb9cb919713`, verified via the public indexer
 - [x] Managed artifacts committed — circuits + prover/verifier keys + ZKIR under `src/managed/trien/`
 - [x] Live dApp — [midnight-rust-psi.vercel.app](https://midnight-rust-psi.vercel.app), redeployed on every push
 - [x] Demo video — [youtu.be/5gKaCGEMLYc](https://youtu.be/5gKaCGEMLYc)
@@ -249,11 +251,14 @@ Proving happens locally on purpose: a proof server is handed the witness, and se
 
 | Feature | Status | Detail |
 |---|---|---|
-| Contract deployed | ✅ Real | `a234fcd8…bca3` on Midnight Preview; indexer returns live ledger state |
+| Contract deployed | ✅ Real | `25b6851f…6414` on Midnight Preprod; deploy tx `905a0e99…9713`; indexer returns live ledger state |
 | Four circuits + keys + ZKIR | ✅ Real | Committed under `src/managed/trien/`, CI-reproducible from `trien.compact` |
 | Live dApp | ✅ Real | Vercel, editorial page + Lace connect + hold-to-reveal instrument |
 | Lace connect / network guard | ✅ Real | Connect + forget-session; refuses a wallet on the wrong network |
-| dApp instrument | ✅ Real | Runs live in the page — a simulated proof lands every few seconds and traces to the root (display only; no wallet needed) |
+| dApp instrument | ✅ Real | Runs live in the page — initialize, register and proveAccess are wired through Lace with the real circuits; hold-to-reveal traces proofs to the root |
+| Operator initialize | 🟡 Next | Deploy is live; `admin` is still unbound. Binding needs the initialize zero-knowledge proof, built in the wallet (Lace on preprod) — there is no headless path |
+| Member register + proveAccess | 🟡 Next | Land one real register and one real proveAccess tx on preprod once initialize is bound |
+| Live dApp → preprod | 🟡 Next | Vercel env: `VITE_NETWORK_ID=preprod` + the preprod contract address (project env lives outside the repo) |
 | Demo video | ✅ Real | [trien demo](https://youtu.be/5gKaCGEMLYc) — walkthrough of the live dApp: instrument firing, hold-to-reveal tracing proofs to the root |
 | Source verification | ✅ Real | CI recompiles the contract from `trien.compact` on every push — committed circuits, keys and ZKIR are reproducible from source |
 | Contract verification | ✅ Real | 14-test suite against the real Compact runtime (the same interpreter the chain uses) + CI compile-from-source |
@@ -262,7 +267,7 @@ Proving happens locally on purpose: a proof server is handed the witness, and se
 
 ## Tests
 
-The suite runs the circuits through the real Compact runtime — the same interpreter the chain uses, minus proof generation — so every `assert` in the contract fires exactly as it would on Preview. It covers the operator checks, the membership proof, double-spend rejection, cross-verifier unlinkability, and each of the three things revocation has to do.
+The suite runs the circuits through the real Compact runtime — the same interpreter the chain uses, minus proof generation — so every `assert` in the contract fires exactly as it would on Preprod. It covers the operator checks, the membership proof, double-spend rejection, cross-verifier unlinkability, and each of the three things revocation has to do.
 
 ```
  RUN  v2.1.9 /home/arch/midnightzks/contract
@@ -349,14 +354,14 @@ npm run deploy            # deploys, then calls initialize
 
 Deployment is two transactions on purpose. The first puts the circuits and an empty ledger on chain; `initialize` then writes the operator commitment into `admin`. Keeping them apart means the registry is inert until somebody proves they hold the operator secret, rather than the contract trusting whoever happened to submit the deployment.
 
-Funding is the only manual step: the faucet dispenses tNight to the unshielded address, and tNight must be delegated (Lace → **Generate tDust**) before the fee balance is non-zero and `npm run deploy` completes. The result lands in `deploy/deployment.json`:
+Funding is the only manual step: the [preprod faucet](https://midnight-tmnight-preprod.nethermind.dev) dispenses tNight to the unshielded address, and tNight must be delegated (Lace → **Generate tDust**) before the fee balance is non-zero and the deploy completes. The result lands in `deploy/deployment.json`:
 
 ```json
 {
-  "network": "preview",
-  "contractAddress": "a234fcd8498a793f498185cc35a2e29c4145d3cc61bdd0341eefbab887bfbca3",
-  "deployTxId": "…",
-  "initializeTxId": "…",
+  "network": "preprod",
+  "contractAddress": "25b6851f398827f7d84729e63d1cb96ae271af2c63af51d725720a30a5aa6414",
+  "deployTxId": "905a0e9959473c47583279cc3544ea27e2f0b302dcbc06070747fdb9cb919713",
+  "initializeTxId": "…bound from the dApp — the initialize proof is built in the wallet, not headless",
   "operatorCommitment": "…",
   "deployedAt": "…"
 }
@@ -399,7 +404,7 @@ vercel.json                  build config for the deployed dApp
 | Layer | Technology |
 |---|---|
 | Contract | Compact 0.23 (`pragma language_version 0.23`), compiler 0.5.1, `@midnight-ntwrk/compact-runtime` 0.16.0 |
-| Chain | Midnight Preview |
+| Chain | Midnight Preprod |
 | Frontend | React 18, Vite 6, TypeScript, Tailwind 4, motion, Lenis |
 | Wallet | Lace via `@midnight-ntwrk/dapp-connector-api` 4.0.1 |
 | Integration | `@midnight-ntwrk/midnight-js-*` 4.1.1 (contracts, proof provider, indexer data, private state) |
