@@ -70,6 +70,16 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      # The dApp imports @trien/contract (file:../contract), whose managed
+      # output resolves @midnight-ntwrk/compact-runtime from the contract
+      # package. npm does not install file: deps, so the contract's node_modules
+      # must exist for tsc/vite to resolve the runtime when they descend into
+      # ../contract/src. The contract job compiles+installs anyway; this keeps
+      # the frontend job self-sufficient.
+      - name: Install contract deps
+        working-directory: contract
+        run: npm ci
+
       - name: Typecheck
         working-directory: frontend
         run: npm run typecheck
