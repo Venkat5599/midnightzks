@@ -11,6 +11,7 @@
 ![Stack](https://img.shields.io/badge/React%2018%20·%20Vite%206%20·%20TypeScript-1f1f23)
 ![Compact](https://img.shields.io/badge/Compact%200.23-4f46e5)
 ![Midnight](https://img.shields.io/badge/Midnight-Preprod-34d399)
+[![X (Twitter)](https://img.shields.io/badge/X-@trien__midnight-1DA1F2)](https://x.com/trien_midnight)
 [![License: MIT](https://img.shields.io/badge/license-MIT-34d399.svg)](LICENSE)
 
 ### Prove you're on the list. Nobody learns who you are.
@@ -19,7 +20,7 @@ Triện is an on-chain allowlist where membership is a zero-knowledge claim. An 
 
 ### ▶ Live now — the instrument runs at **[midnight-rust-psi.vercel.app](https://midnight-rust-psi.vercel.app)**
 
-**[ Live dApp ↗ ](https://midnight-rust-psi.vercel.app)** · **[ Demo video ↗ ](https://youtu.be/5gKaCGEMLYc)** · **[ How it works ↓ ](#how-it-works)** · **[ Run it locally ↓ ](#run-it-locally)**
+**[ Live dApp ↗ ](https://midnight-rust-psi.vercel.app)** · **[ Demo video ↗ ](https://youtu.be/5gKaCGEMLYc)** · **[ X ↗ ](https://x.com/trien_midnight)** · **[ How it works ↓ ](#how-it-works)** · **[ Run it locally ↓ ](#run-it-locally)**
 
 Built for the Midnight challenge — Private Allowlist Access (Level 3). MIT licensed.
 
@@ -244,6 +245,7 @@ Proving happens locally on purpose: a proof server is handed the witness, and se
 - [x] Managed artifacts committed — circuits + prover/verifier keys + ZKIR under `src/managed/trien/`
 - [x] Live dApp — [midnight-rust-psi.vercel.app](https://midnight-rust-psi.vercel.app), redeployed on every push
 - [x] Demo video — [youtu.be/5gKaCGEMLYc](https://youtu.be/5gKaCGEMLYc)
+- [x] X profile — [@trien_midnight](https://x.com/trien_midnight)
 
 ---
 
