@@ -24,11 +24,29 @@ export ledger members: HistoricMerkleTree<10, Bytes<32>>;
 /// shared across many users, without revealing who spent it.
 export ledger nullifiers: Set<Bytes<32>>;
 
+/// Verifier identifiers the operator has authorized.
+///
+/// `proveAccess` refuses to run for an unknown verifier, so a member's proof
+/// cannot be collected by an identifier the operator has not blessed, and one
+/// transaction shuts a compromised verifier out. Authorizing a verifier also
+/// seeds its access counter, which is why that counter can be read later
+/// without a missing-key check.
+export ledger verifiers: Set<Bytes<32>>;
+
+/// Successful accesses per verifier. A verifier learns how much its gate is
+/// used, and so does everyone else. No member is identified by it.
+export ledger verifierAccesses: Map<Bytes<32>, Uint<64>>;
+
 /// Commitment of the registry operator: H("gk:admin", secret).
 ///
 /// A separate hash domain from membership commitments, so being a member of
 /// any role can never be mistaken for holding the operator key.
 export ledger admin: Bytes<32>;
+
+/// A proposed successor operator, set by `proposeAdmin` and consumed by
+/// `acceptAdmin`. Publishing the proposal is the point: a handover is
+/// two-sided and visible, so an operator cannot be swapped out silently.
+export ledger pendingAdmin: Bytes<32>;
 
 /// Bumped on every revocation. Nullifiers are epoch-scoped, so a revocation
 /// invalidates outstanding proofs rather than merely blocking future ones.
@@ -48,6 +66,11 @@ export ledger issued: Counter;
 /// contract cannot detect, because a zeroed leaf is indistinguishable from a
 /// leaf that was never written.
 export ledger revocations: Counter;
+
+/// Operator emergency stop. While paused, `proveAccess` refuses; every other
+/// circuit keeps working, so access can be frozen without freezing the
+/// administration of the registry.
+export ledger paused: Boolean;
 
 // ---------------------------------------------------------------------------
 // PRIVATE WITNESSES
@@ -204,10 +227,69 @@ export circuit revoke(index: Uint<64>): [] {
   revocations.increment(1);
 }
 
+/// Operator authorizes a verifier identifier.
+///
+/// Until this runs, `proveAccess` refuses that identifier, so an unknown
+/// verifier cannot collect proofs at all.
+export circuit authorizeVerifier(verifierId: Bytes<32>): [] {
+  assertOperator();
+  assert(!verifiers.member(disclose(verifierId)), "verifier already authorized");
+  verifiers.insert(disclose(verifierId));
+  verifierAccesses.insert(disclose(verifierId), default<Uint<64>>);
+}
+
+/// Operator withdraws a verifier's authorization.
+///
+/// Effective on the next proof: that identifier fails the authorization check,
+/// so a verifier that has gone bad stops accepting proofs without a
+/// registry-wide epoch bump, which would cost every honest member their
+/// outstanding credential.
+export circuit revokeVerifier(verifierId: Bytes<32>): [] {
+  assertOperator();
+  assert(verifiers.member(disclose(verifierId)), "verifier is not authorized");
+  verifiers.remove(disclose(verifierId));
+}
+
+/// Operator freezes access.
+export circuit pause(): [] {
+  assertOperator();
+  assert(!paused, "registry is already paused");
+  paused = true;
+}
+
+/// Operator lifts a freeze.
+export circuit unpause(): [] {
+  assertOperator();
+  assert(paused, "registry is not paused");
+  paused = false;
+}
+
+/// Operator names a successor. Nothing changes until the successor accepts, so
+/// a typo cannot lock the registry out of its own administration.
+export circuit proposeAdmin(commitment: Bytes<32>): [] {
+  assertOperator();
+  pendingAdmin = disclose(commitment);
+}
+
+/// The proposed successor takes over, by proving knowledge of the secret
+/// behind the commitment that was proposed.
+///
+/// Two-sided on purpose: the outgoing operator cannot hand the registry to an
+/// address nobody controls, and the incoming operator cannot take it without
+/// the outgoing one's proposal.
+export circuit acceptAdmin(): [] {
+  assert(pendingAdmin != default<Bytes<32>>, "no operator handover proposed");
+  assert(adminCommitmentOf(memberSecret()) == pendingAdmin, "caller is not the proposed operator");
+  admin = disclose(pendingAdmin);
+  pendingAdmin = default<Bytes<32>>;
+}
+
 /// Prove membership to `verifierId`, for `requiredRole`, without revealing
 /// which member you are.
 ///
 /// Asserts, entirely in zero knowledge:
+///   - the registry is not paused
+///   - the verifier is authorized by the operator
 ///   - the presented credential carries exactly the role being asked for
 ///   - the caller's commitment is a leaf of `members`
 ///   - the root proven against is currently valid (not a stale, pre-revocation root)
@@ -220,18 +302,23 @@ export circuit revoke(index: Uint<64>): [] {
 /// holding this role proved access to this verifier. They do not learn which
 /// party, and cannot link this to the same party's proof at any other verifier.
 export circuit proveAccess(verifierId: Bytes<32>, requiredRole: Bytes<32>): [] {
+  assert(!paused, "registry is paused");
+
   const secret = memberSecret();
   const role = memberRole();
   const expiry = memberExpiry();
   const path = memberPath();
 
-  // 1. The credential must carry the role this verifier asked for.
+  // 1. The verifier must be one the operator authorized.
+  assert(verifiers.member(disclose(verifierId)), "verifier is not authorized");
+
+  // 2. The credential must carry the role this verifier asked for.
   assert(role == requiredRole, "credential role does not match the role required here");
 
-  // 2. Expiry, against the chain's own clock rather than the caller's.
+  // 3. Expiry, against the chain's own clock rather than the caller's.
   assert(blockTimeLt(disclose(expiry)), "credential has expired");
 
-  // 3. Membership: the path must carry our commitment to a valid root.
+  // 4. Membership: the path must carry our commitment to a valid root.
   assert(path.leaf == commitmentOf(secret, role, expiry), "path does not match caller's credential");
   // The root is already public ledger state, and a root does not identify which
   // leaf was used to reach it, so disclosing it leaks nothing. The compiler
@@ -239,10 +326,17 @@ export circuit proveAccess(verifierId: Bytes<32>, requiredRole: Bytes<32>): [] {
   assert(members.checkRoot(disclose(merkleTreePathRoot<10, Bytes<32>>(path))),
          "stale or unknown Merkle root - membership revoked or never granted");
 
-  // 4. Uniqueness: one access per (member, verifier, epoch).
+  // 5. Uniqueness: one access per (member, verifier, epoch).
   const nul = disclose(nullifierOf(secret, verifierId, epoch.read()));
   assert(!nullifiers.member(nul), "credential already used at this verifier");
 
   nullifiers.insert(nul);
+  // The cast is not decoration: `+ 1` on a Uint<64> widens the result type to
+  // Uint<0..2^64+1>, which the map's value type refuses. Narrowing it back is
+  // exact here, because the counter cannot reach the widened bound.
+  verifierAccesses.insert(
+    disclose(verifierId),
+    (verifierAccesses.lookup(disclose(verifierId)) + 1) as Uint<64>
+  );
   accessCount.increment(1);
 }
