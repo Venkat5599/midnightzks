@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "prebuild": "npm run sync:zk",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "sync:zk": "node scripts/sync-zk.mjs"
