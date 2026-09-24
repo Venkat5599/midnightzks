@@ -2,8 +2,10 @@ import {
   Contract as TrienContractCtor,
   witnesses,
   pureCircuits,
+  createOperatorState,
   createPrivateState,
   randomPrivateState,
+  roleFromString,
   type TrienPrivateState,
 } from '@trien/contract';
 import { findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
@@ -30,9 +32,9 @@ import type { WalletSession } from './lace';
  * (`getProvingProvider`), falling back to the configured proof server — the
  * wallet is the authority on which services to use.
  *
- * Private state (the operator secret, or a member's secret) is stored in a
+ * Private state is a credential — a secret, a role and a deadline — stored in a
  * per-account browser store, keyed by the connected wallet address so two
- * wallets on one machine cannot read each other's secrets.
+ * wallets on one machine cannot read each other's credentials.
  */
 
 const zkConfigProvider = new HttpZKConfigProvider(`.${ZK_ASSETS_BASE}`);
@@ -78,16 +80,25 @@ export const compiledTrien = CompiledContract.make<TrienContract, TrienPrivateSt
   CompiledContract.withCompiledFileAssets(`.${ZK_ASSETS_BASE}`),
 );
 
-/** Commitment of a secret — the only thing the operator ever sees. */
-export const commitmentOf = (secret: Uint8Array): Uint8Array => pureCircuits.commitmentOf(secret);
+/**
+ * Commitment of a credential — the only thing the operator ever sees.
+ *
+ * Role and deadline are inside the hash, so the operator registers a single
+ * opaque value and the chain never learns either.
+ */
+export const commitmentOf = (
+  secret: Uint8Array,
+  role: Uint8Array,
+  expiry: bigint,
+): Uint8Array => pureCircuits.commitmentOf(secret, role, expiry);
 
 /**
  * Attach to the deployed registry with a connected session.
  *
  * When `privateState` is given it is stored at `PRIVATE_STATE_ID` for this
- * account before the contract is looked up, so the caller's witnesses read
- * the right secret. When omitted, the existing stored state is used (a
- * returning member re-attaches with the same secret).
+ * account before the contract is looked up, so the caller's witnesses read the
+ * right credential. When omitted, the existing stored state is used (a
+ * returning holder re-attaches with the same credential).
  */
 export const openRegistry = async (session: WalletSession, privateState?: TrienPrivateState) => {
   if (CONFIGURED_CONTRACT_ADDRESS === undefined) {
@@ -104,17 +115,21 @@ export const openRegistry = async (session: WalletSession, privateState?: TrienP
 export type OpenContract = Awaited<ReturnType<typeof openRegistry>>;
 
 /** A fresh random secret — the holder never reveals it to anyone. */
-export const freshSecret = (): Uint8Array => randomPrivateState().secret;
+export const freshSecret = (): Uint8Array => randomPrivateState(roleFromString(''), 0n).secret;
 
-/** Operator/member private state from a caller-supplied secret. */
-export const privateStateOf = (secret: Uint8Array): TrienPrivateState => createPrivateState(secret);
+/** A member credential, from the three parts that define it. */
+export const privateStateOf = (
+  secret: Uint8Array,
+  role: Uint8Array,
+  expiry: bigint,
+): TrienPrivateState => createPrivateState(secret, role, expiry);
 
-/**
- * Persist an all-new secret into this account's private state store, then
- * attach. Used by headless-style flows where the caller pastes a secret
- * (e.g. the operator binding the registry from a seed phrase).
- */
-export const openRegistryWithSecret = async (session: WalletSession, secret: Uint8Array) =>
-  openRegistry(session, createPrivateState(secret));
+/** An operator state. Its role and deadline are placeholders; admin circuits read neither. */
+export const operatorStateOf = (secret: Uint8Array): TrienPrivateState =>
+  createOperatorState(secret);
 
+/** A 32-byte label (a role, or a verifier id) from a short string. */
+export const labelOf = (label: string): Uint8Array => roleFromString(label);
+
+/** The commitment an operator secret owns — the value `initialize` binds. */
 export { NETWORK_ID };
