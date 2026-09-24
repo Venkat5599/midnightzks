@@ -69,3 +69,14 @@ export const DEFAULT_VERIFIER: string = VERIFIERS[0];
 
 /** How long a freshly generated credential stays valid, in days. */
 export const DEFAULT_EXPIRY_DAYS = 365;
+
+/**
+ * Indexer used by the ledger panel when no wallet is connected.
+ *
+ * The panel reads public ledger state, which needs no session — so it has to
+ * work before anyone connects, and it says so on screen.
+ */
+export const READ_ONLY_INDEXER_URI: string = import.meta.env.VITE_INDEXER_URI ?? FALLBACK_INDEXER_URI;
+
+export const READ_ONLY_INDEXER_WS_URI: string =
+  import.meta.env.VITE_INDEXER_WS_URI ?? FALLBACK_INDEXER_WS_URI;
