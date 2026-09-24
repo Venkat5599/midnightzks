@@ -4,6 +4,7 @@ import { Plate } from './Plate';
 import { Reveal } from './components/Reveal';
 import { Button } from './components/ui/button';
 import { Instrument } from './components/Instrument';
+import { LedgerPanel } from './components/LedgerPanel';
 import { CONFIGURED_CONTRACT_ADDRESS, NETWORK_ID } from './config';
 import { connectWallet, disconnectWallet, WalletError, type WalletSession } from './lib/lace';
 import { useLenis } from './lib/useLenis';
@@ -257,13 +258,13 @@ export const App = () => {
         <div className="mx-auto max-w-[88rem] px-5 py-20 sm:px-10 lg:px-14 lg:py-28">
           <Reveal>
             <Tag>everything the chain stores</Tag>
-            <h2 className="m-0 mt-4 mb-12 max-w-[18ch] text-[clamp(1.7rem,1rem+2vw,2.6rem)] leading-[1.08] font-[640] tracking-[-0.032em]">
-              Five fields. No identities.
+            <h2 className="m-0 mt-4 mb-12 max-w-[22ch] text-[clamp(1.7rem,1rem+2vw,2.6rem)] leading-[1.08] font-[640] tracking-[-0.032em]">
+              Eleven fields. No identities.
             </h2>
           </Reveal>
-          <dl className="m-0 grid gap-px bg-hair-soft sm:grid-cols-2 lg:grid-cols-5">
+          <dl className="m-0 grid gap-px bg-hair-soft sm:grid-cols-2 lg:grid-cols-4">
             {LEDGER.map(([field, note], i) => (
-              <Reveal key={field} delay={i * 0.05} className="bg-ink">
+              <Reveal key={field} delay={i * 0.04} className="bg-ink">
                 <div className="h-full py-7 sm:px-6">
                   <dt className="font-mono text-[0.8125rem] text-clay">{field}</dt>
                   <dd className="m-0 mt-3 text-[0.9375rem] text-bone-2">{note}</dd>
@@ -273,6 +274,9 @@ export const App = () => {
           </dl>
         </div>
       </section>
+
+      {/* The registry, read from the chain with no wallet at all. */}
+      <LedgerPanel />
 
       {/* The instrument — real circuit calls. Only available with a session. */}
       {session !== undefined && <Instrument session={session} />}
