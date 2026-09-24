@@ -577,3 +577,30 @@ vercel.json                  build config for the deployed dApp
 ```
 
 ---
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Contract | Compact 0.23 (`pragma language_version 0.23`), compiler 0.31.1, `@midnight-ntwrk/compact-runtime` 0.16.0 |
+| Chain | Midnight Preprod |
+| Frontend | React 18, Vite 6, TypeScript, Tailwind 4, motion, Lenis |
+| Wallet | Lace via `@midnight-ntwrk/dapp-connector-api` 4.0.1 |
+| Integration | `@midnight-ntwrk/midnight-js-*` 4.1.1 (contracts, proof provider, indexer data, private state) |
+| Deploy | `@midnight-ntwrk/wallet` 5.0.0 |
+| Tests | Vitest 2.1, simulator against the real Compact runtime |
+| CI | GitHub Actions, Node 22 |
+
+---
+
+## Roadmap
+
+- **Multiple issuers** — an issuer registry lets a DAO, a university and an employer each hold their own subtree and their own revocation epoch; a verifier declares which issuers it trusts, and the proof carries an issuer index without leaking which specific credential was used beyond that set. Roles and deadlines are already bound per credential; this is the layer above them.
+- **A verification SDK** — because the nullifier already takes a verifier id as input, one credential can be presented to many apps without any of them linking the presentations. Wrapping the verify call in a small TypeScript package would let any Midnight dApp drop it in, and let a verifier check a receipt against public ledger state offline.
+- **Revocation by credential, not by leaf index** — the operator currently revokes by index. A commitment-keyed revocation would let an operator revoke without first locating the leaf, which is what a registry with thousands of members actually needs.
+
+---
+
+## License
+
+MIT — built for the Midnight challenge, 2026.
