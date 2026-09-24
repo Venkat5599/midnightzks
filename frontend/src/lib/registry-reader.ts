@@ -28,6 +28,34 @@ export const readRegistryLedger = async (
 };
 
 /**
+ * Read the raw state blob the indexer holds for an address.
+ *
+ * Used when the decoded read fails. A registry deployed from an older source
+ * has a ledger this build's decoder cannot lay out, and the honest answer to
+ * that is not a stack trace: it is the size of what the chain actually holds,
+ * and a sentence saying why this build cannot read it.
+ *
+ * One POST, no wallet, no dependencies — the same query the README shows.
+ */
+export const readRawContractState = async (
+  indexerUri: string,
+  contractAddress: string,
+): Promise<string | null> => {
+  const res = await fetch(indexerUri, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      query: `{ contractAction(address: "${contractAddress}") { address transaction { hash } state } }`,
+    }),
+  });
+  if (!res.ok) return null;
+  const body = (await res.json()) as {
+    data?: { contractAction?: { state?: string } | null };
+  };
+  return body.data?.contractAction?.state ?? null;
+};
+
+/**
  * Everything an observer can learn, as plain numbers.
  *
  * Deliberately a flat shape: if a field here is not in the contract's ledger,
