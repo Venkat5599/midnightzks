@@ -5,29 +5,49 @@ import CompactStandardLibrary;
 // ---------------------------------------------------------------------------
 // PUBLIC LEDGER STATE
 //
-// Everything below is visible to every observer of the chain. Note that it
-// contains no identities: only opaque 32-byte commitments, an aggregate
-// counter, and an epoch number.
+// Everything below is visible to every observer of the chain. It contains no
+// identities: commitments, opaque nullifiers, aggregate counters, and the
+// operator's own authorization decisions.
 // ---------------------------------------------------------------------------
 
-/// Commitments of approved members. A commitment is H(secret), so publishing
-/// it reveals nothing about the holder. HistoricMerkleTree is used so that
-/// `resetHistory()` can invalidate every previously-valid root at once.
+/// Commitments of approved members: H("gk:commit", secret, role, expiry).
+///
+/// Publishing a commitment reveals nothing about the holder — not the secret,
+/// not which role they hold, not when their credential lapses.
+///
+/// HistoricMerkleTree is used so that `resetHistory()` can invalidate every
+/// previously-valid root at once, which is what makes revocation immediate
+/// rather than eventual.
 export ledger members: HistoricMerkleTree<10, Bytes<32>>;
 
-/// Nullifiers that have already been spent. Prevents one credential from
-/// being shared across many users, without revealing who spent it.
+/// Nullifiers that have already been spent. Prevents one credential from being
+/// shared across many users, without revealing who spent it.
 export ledger nullifiers: Set<Bytes<32>>;
+
+/// Commitment of the registry operator: H("gk:admin", secret).
+///
+/// A separate hash domain from membership commitments, so being a member of
+/// any role can never be mistaken for holding the operator key.
+export ledger admin: Bytes<32>;
 
 /// Bumped on every revocation. Nullifiers are epoch-scoped, so a revocation
 /// invalidates outstanding proofs rather than merely blocking future ones.
 export ledger epoch: Counter;
 
-/// Aggregate number of successful accesses. The only usage signal published.
+/// Aggregate number of successful accesses. The only usage signal published
+/// that is not scoped to a single verifier.
 export ledger accessCount: Counter;
 
-/// Commitment of the registry operator. Not the operator's identity.
-export ledger admin: Bytes<32>;
+/// Credentials issued. A batch of four counts as four.
+export ledger issued: Counter;
+
+/// Revocations performed.
+///
+/// `issued - revocations` is an *upper bound* on live members, and the README
+/// says so: revoking an index that was never written is an operator error this
+/// contract cannot detect, because a zeroed leaf is indistinguishable from a
+/// leaf that was never written.
+export ledger revocations: Counter;
 
 // ---------------------------------------------------------------------------
 // PRIVATE WITNESSES
@@ -39,19 +59,57 @@ export ledger admin: Bytes<32>;
 /// The holder's root secret. Knowledge of this is what membership means.
 witness memberSecret(): Bytes<32>;
 
-/// The holder's Merkle authentication path proving their commitment is a
-/// leaf of `members`.
+/// The holder's Merkle authentication path proving their commitment is a leaf
+/// of `members`.
 witness memberPath(): MerkleTreePath<10, Bytes<32>>;
+
+/// The role this credential was issued for. Compared against the role a
+/// verifier asks for; never disclosed.
+witness memberRole(): Bytes<32>;
+
+/// The block time after which this credential is dead.
+///
+/// Disclosed when it is checked, because `blockTimeLt` discloses the bound it
+/// is given. A deadline is not an identity, but it is public, and the README
+/// lists it as such.
+witness memberExpiry(): Uint<64>;
 
 // ---------------------------------------------------------------------------
 // HELPERS
 // ---------------------------------------------------------------------------
 
-/// A member's public commitment: H("gk:commit", secret).
-export pure circuit commitmentOf(secret: Bytes<32>): Bytes<32> {
+/// The operator's identity commitment: H("gk:admin", secret).
+export pure circuit adminCommitmentOf(secret: Bytes<32>): Bytes<32> {
   return persistentHash<Vector<2, Bytes<32>>>(
-    [pad(32, "gk:commit"), secret]
+    [pad(32, "gk:admin"), secret]
   );
+}
+
+/// Pre-image of a member commitment.
+struct Credential {
+  domain: Bytes<32>,
+  secret: Bytes<32>,
+  role: Bytes<32>,
+  expiry: Uint<64>,
+}
+
+/// A member's public commitment: H("gk:commit", secret, role, expiry).
+///
+/// Binding the role and the expiry into the commitment is what lets the
+/// circuit enforce both while the tree knows neither: the leaf commits to
+/// them, so a holder can only ever prove the exact (secret, role, expiry)
+/// triple the operator was handed when the credential was issued.
+export pure circuit commitmentOf(
+  secret: Bytes<32>,
+  role: Bytes<32>,
+  expiry: Uint<64>
+): Bytes<32> {
+  return persistentHash<Credential>(Credential {
+    domain: pad(32, "gk:commit"),
+    secret: secret,
+    role: role,
+    expiry: expiry,
+  });
 }
 
 /// Domain-separated pre-image of a nullifier.
@@ -63,8 +121,13 @@ struct NullifierInput {
 }
 
 /// Per-verifier, per-epoch nullifier: H("gk:null", secret, verifier, epoch).
-/// Scoping by verifier means two different verifiers cannot link the same
-/// user across their sites. Scoping by epoch means revocation is retroactive.
+///
+/// Scoping by verifier means two verifiers cannot link the same user across
+/// their sites. Scoping by epoch means revocation is retroactive.
+///
+/// It is deliberately *not* scoped by role: a person holding two roles gets one
+/// access per verifier per epoch, and a verifier cannot tell that two
+/// presentations came from one person under different roles.
 export pure circuit nullifierOf(
   secret: Bytes<32>,
   verifierId: Bytes<32>,
@@ -78,6 +141,12 @@ export pure circuit nullifierOf(
   });
 }
 
+/// The operator check, written once. Every administrative circuit starts here.
+/// Not `pure`: it reads the ledger to compare against `admin`.
+circuit assertOperator(): [] {
+  assert(adminCommitmentOf(memberSecret()) == admin, "caller is not the operator");
+}
+
 // ---------------------------------------------------------------------------
 // CIRCUITS
 // ---------------------------------------------------------------------------
@@ -85,63 +154,92 @@ export pure circuit nullifierOf(
 /// One-time setup. Binds the registry to an operator commitment.
 export circuit initialize(): [] {
   assert(admin == default<Bytes<32>>, "registry already initialized");
-  admin = disclose(commitmentOf(memberSecret()));
+  admin = disclose(adminCommitmentOf(memberSecret()));
 }
 
 /// Operator adds an approved member's commitment to the tree.
-/// The operator learns the commitment (they issued it); the chain learns
-/// only that the approved set grew by one.
+///
+/// The operator learns the commitment — they were handed it at issuance. The
+/// chain learns only that the approved set grew by one, and the role and
+/// expiry stay inside the commitment, so they are not disclosed here either.
 ///
 /// `insert`, not `insertHash`: the leaf stored is leafHash(commitment), which
 /// is what `merkleTreePathRoot` recomputes when `proveAccess` validates a path
 /// whose `leaf` field is the raw commitment. Storing the commitment directly
 /// would make every membership proof fail against the root.
 export circuit register(commitment: Bytes<32>): [] {
-  assert(commitmentOf(memberSecret()) == admin, "caller is not the operator");
+  assertOperator();
   members.insert(disclose(commitment));
+  issued.increment(1);
+}
+
+/// Operator adds four commitments in one transaction.
+///
+/// Onboarding a cohort is the common case for an allowlist, and four leaves in
+/// one transaction costs less than four transactions.
+export circuit registerMany(commitments: Vector<4, Bytes<32>>): [] {
+  assertOperator();
+  for (const i of 0..4) {
+    members.insert(disclose(commitments[i]));
+  }
+  issued.increment(4);
 }
 
 /// Operator revokes the member at `index`.
 ///
-/// Two things happen, and the second is the important one:
+/// Three things happen, and the last two are the important ones:
 ///   1. the leaf is zeroed, so the member is no longer in the tree;
-///   2. `resetHistory()` invalidates every previously-valid root.
+///   2. `resetHistory()` invalidates every previously-valid root;
+///   3. `epoch` is bumped, which changes every member's nullifier.
 ///
-/// (2) is what makes revocation immediate. Without it, a revoked member
-/// could keep proving against a stale root they had already been issued a
-/// path for. Bumping the epoch additionally voids their outstanding
-/// nullifiers, so they cannot replay a proof built before the revocation.
+/// (2) is what makes revocation immediate: without it, a revoked member could
+/// keep proving against a stale root they had already been issued a path for.
+/// (3) is what makes it retroactive: a proof built before the revocation
+/// cannot be replayed after it.
 export circuit revoke(index: Uint<64>): [] {
-  assert(commitmentOf(memberSecret()) == admin, "caller is not the operator");
+  assertOperator();
   members.insertIndexDefault(disclose(index));
   members.resetHistory();
   epoch.increment(1);
+  revocations.increment(1);
 }
 
-/// Prove membership to `verifierId` without revealing which member you are.
+/// Prove membership to `verifierId`, for `requiredRole`, without revealing
+/// which member you are.
 ///
 /// Asserts, entirely in zero knowledge:
+///   - the presented credential carries exactly the role being asked for
 ///   - the caller's commitment is a leaf of `members`
 ///   - the root proven against is currently valid (not a stale, pre-revocation root)
+///   - the credential has not expired, judged by the chain's clock
 ///   - this nullifier has not already been spent
 ///
-/// Discloses: the nullifier and nothing else. An observer learns that some
-/// approved, non-revoked, not-yet-seen party proved access to this verifier.
-/// They do not learn which party, and cannot link this to the same party's
-/// proof at any other verifier.
-export circuit proveAccess(verifierId: Bytes<32>): [] {
+/// Discloses: the nullifier, the Merkle root (already public state), and the
+/// credential's expiry, because the block-time check discloses the bound it is
+/// given. An observer learns that some approved, non-revoked, unexpired party
+/// holding this role proved access to this verifier. They do not learn which
+/// party, and cannot link this to the same party's proof at any other verifier.
+export circuit proveAccess(verifierId: Bytes<32>, requiredRole: Bytes<32>): [] {
   const secret = memberSecret();
+  const role = memberRole();
+  const expiry = memberExpiry();
   const path = memberPath();
 
-  // 1. Membership: the path must carry our commitment to a valid root.
-  assert(path.leaf == commitmentOf(secret), "path does not match caller's commitment");
-  // The root is already public ledger state, and a root does not identify
-  // which leaf was used to reach it, so disclosing it leaks nothing. The
-  // compiler still requires us to say so explicitly.
+  // 1. The credential must carry the role this verifier asked for.
+  assert(role == requiredRole, "credential role does not match the role required here");
+
+  // 2. Expiry, against the chain's own clock rather than the caller's.
+  assert(blockTimeLt(disclose(expiry)), "credential has expired");
+
+  // 3. Membership: the path must carry our commitment to a valid root.
+  assert(path.leaf == commitmentOf(secret, role, expiry), "path does not match caller's credential");
+  // The root is already public ledger state, and a root does not identify which
+  // leaf was used to reach it, so disclosing it leaks nothing. The compiler
+  // still requires us to say so explicitly.
   assert(members.checkRoot(disclose(merkleTreePathRoot<10, Bytes<32>>(path))),
          "stale or unknown Merkle root - membership revoked or never granted");
 
-  // 2. Uniqueness: one access per (member, verifier, epoch).
+  // 4. Uniqueness: one access per (member, verifier, epoch).
   const nul = disclose(nullifierOf(secret, verifierId, epoch.read()));
   assert(!nullifiers.member(nul), "credential already used at this verifier");
 
