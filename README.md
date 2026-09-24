@@ -349,3 +349,45 @@ Proving happens locally on purpose: a proof server is handed the witness, and se
 | CI | GitHub Actions (Node 22) | Compile from source + typecheck + tests + frontend build |
 
 ---
+
+## Engineering decisions — the hard problems
+
+**1. `register` must store `leafHash(commitment)`, not the commitment.** The first version used `members.insertHash(commitment)`, which writes the commitment into the tree verbatim. But `proveAccess` validates a path with `merkleTreePathRoot()`, which applies `leafHash()` to the leaf before folding upward. The two disagreed, so `checkRoot()` rejected every honestly constructed proof: the contract compiled, would have deployed, and could never have admitted anybody. Switching to `members.insert()` fixed it. This class of mistake is invisible until something actually tries to prove membership — which is why the test suite exists.
+
+**2. Revocation is a three-part transaction, not a leaf clear.** Zeroing a leaf leaves a revoked member holding a valid path to an older root. `revoke` also calls `resetHistory()` to invalidate every previously-valid root and bumps the epoch to change every member's nullifier. Stale paths stop verifying; proofs built before the revocation cannot be replayed after it.
+
+**3. Withdrawing one verifier must not cost every member their credential.** The obvious implementation of "this gate is bad" is a registry-wide epoch bump, which voids every outstanding proof for every gate — a denial of service dressed as a security response. Verifier authorization is therefore checked on its own, so `revokeVerifier` is targeted and the epoch is reserved for what it is actually for: revoking a member.
+
+**4. `+ 1` widens a `Uint<64>` past `Uint<64>`, and Compact is right to complain.** `verifierAccesses.lookup(v) + 1` has type `Uint<0..2^64+1>`, which the map's value type rejects; the literal `0` in a ternary had the same problem. The fix is an explicit narrowing cast — `(…) as Uint<64>` — and it is not decorative: the bound the compiler infers is genuinely wider than the type the ledger stores, and it will not quietly narrow it for you.
+
+**5. A helper that reads the ledger is not `pure`.** `assertOperator()` began as `pure circuit`, which reads well and does not compile: it compares against `admin`, and reading a ledger field makes a circuit impure. Compact caught it at compile time rather than letting five call sites each repeat the same check.
+
+**6. There is no mutable local, and no `let`.** Compact reserves `let` for future use, and reassigning a `const` local fails with `expected left-hand side of = to have an ADT type`. So every read-modify-write has to be expressed as a single expression. The per-verifier counter is seeded to zero when a verifier is authorized, precisely so that the read in `proveAccess` can never be a missing key and the update can stay one expression.
+
+**7. This laptop cannot generate proving keys, and that is a hardware fact, not a project one.** `compactc` parses and type-checks a contract anywhere, but the key generator (`zkir`) is built for CPUs with ADX and dies with SIGILL (`exit status -4`) on an AMD A6-9225 — the core dump lands after the compiler has already wiped the output directory. Two consequences, both in this repo: compiling is done on a machine that has the instruction set (CI, or the box the artifacts were produced on), and the committed `src/managed/trien/` tree is the compiler's output rather than anybody's hand-edit. The tests run fine locally, because running a circuit needs the interpreter, not the key generator.
+
+**8. The nullifier is the minimum public leak — and the deadline is a deliberate second one.** One credential, one access per verifier per epoch. Uniqueness necessarily means publishing something stable per (member, verifier, epoch). The deadline is public for a different reason: `blockTimeLt` discloses the bound it is given, and a check against the chain's clock cannot be done against a secret the chain cannot see. The README and the dApp both state both limits plainly.
+
+**9. The proof server runs locally.** A proof server is handed the witness — the secret, the role, the deadline and the Merkle path. Pointing the dApp at a hosted server would defeat the design. The dApp defaults to localhost proving and only falls back to a configured server after a wallet reports one.
+
+**10. Stale ZK artifacts fail in the wallet, with an error that never says "your artifacts are stale".** The compiler writes to `contract/src/managed/trien/`; the browser fetches from `frontend/public/zk/`. When those disagree, proving fails at the point of use with a message about a missing key. Copying them is therefore a script (`npm run sync:zk`) rather than a habit — and it skips the multi-megabyte proving keys by default, because the hosted dApp proves inside the connected wallet and only a local proof server needs them (`--with-prover`).
+
+**11. Funding preprod is two steps, and only one is scriptable.** The faucet ([midnight-tmnight-preprod.nethermind.dev](https://midnight-tmnight-preprod.nethermind.dev)) dispenses tNight to the *unshielded* Night address and rejects the shielded form (`mn_shield-addr_test1…`). Deriving it needs `signingKeyFromBip340()` first — `signatureVerifyingKey()` refuses raw HD bytes. Then tNight must be *delegated* to generate the tDust that pays fees, and delegation has no headless API in `@midnight-ntwrk/wallet` 5.0.0. The deploy seed's 24-word mnemonic is handed to Lace for **Generate tDust**, after which the deploy completes. The endpoints that used to work compound the pain: `testnet-02` no longer resolves, the proof-server image dropped `--network preview` (`error: unexpected argument '--network' found`), and the preprod indexer's GraphQL lives at `/api/v4/graphql` — a wrong endpoint fails silently, because the wallet builds and prints a correct address that simply never syncs.
+
+**12. Syncing preprod is a memory wall, not a speed problem.** The 5.0.0 facade's sync gate walks *shielded* state over ~1.45M+ preprod blocks; on an 8G VPS it dies a few minutes in at ~19K blocks, past a 5 GB Node heap. The preprod deploy therefore runs the SDK 1.2.0 stack, whose sync gate excludes shielded state — peak ~54 MB through the same chain tip, at the cost of a ~2h first sync. Same contract, same wallet derivation, same seed.
+
+---
+
+## Build checklist
+
+- [x] Contract compiles — 11 circuits via `compact compile` (CI recompiles from source on every push)
+- [x] Test suite green — 52/52, run against the real Compact runtime
+- [x] CI green — contract job (compile + typecheck + test) and frontend job (typecheck + build)
+- [x] Contract deployed on Midnight Preprod — `25b6851f398827f7d84729e63d1cb96ae271af2c63af51d725720a30a5aa6414` (the four-circuit build), deploy tx `905a0e9959473c47583279cc3544ea27e2f0b302dcbc06070747fdb9cb919713`, verified via the public indexer
+- [x] Managed artifacts committed — circuits, verifier keys and ZKIR under `src/managed/trien/`
+- [x] ZK artifacts served to the browser by script — `npm run sync:zk` in `frontend/`
+- [x] Live dApp — [midnight-rust-psi.vercel.app](https://midnight-rust-psi.vercel.app), redeployed on every push
+- [x] Demo video — [youtu.be/5gKaCGEMLYc](https://youtu.be/5gKaCGEMLYc)
+- [x] X profile — [@trien_midnight](https://x.com/trien_midnight)
+
+---
