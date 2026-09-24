@@ -40,8 +40,8 @@ const CHAPTERS = [
   {
     n: '03',
     title: ['the proof', 'replaces the identity'],
-    lead: '4 circuits, 1 of them public-facing',
-    body: 'To get in, a holder proves in zero knowledge that they know a secret behind one of those leaves. The circuit discloses the Merkle root, which was already public, and a nullifier. It never discloses the secret, the commitment, or the path, so an access cannot be traced back to a registration.',
+    lead: 'Eleven circuits, one of them public-facing',
+    body: 'To get in, a holder proves in zero knowledge that they know a secret behind one of those leaves — and that the credential they hold carries the role this gate asked for and has not passed its deadline. The circuit discloses the Merkle root, which was already public, the deadline it checked, and a nullifier. It never discloses the secret, the commitment, the role or the path, so an access cannot be traced back to a registration.',
     quote: 'The gate verifies the claim without ever meeting the claimant.',
   },
   {
@@ -62,16 +62,22 @@ const CHAPTERS = [
     n: '06',
     title: ['what is hidden', 'and what is not'],
     lead: 'Stated in both directions',
-    body: 'Repeat visits by one member to one gate within an epoch are prevented, not hidden. That is the whole purpose of the nullifier, and enforcing uniqueness necessarily means publishing something stable per member, per verifier, per epoch. The nullifier is the minimum such thing. A privacy claim that will not name its own limits is not a claim worth trusting.',
+    body: 'Repeat visits by one member to one gate within an epoch are prevented, not hidden. That is the whole purpose of the nullifier, and enforcing uniqueness necessarily means publishing something stable per member, per verifier, per epoch. A role is checked inside the proof and never published, but the deadline is — the chain checks it against its own clock, and a bound the chain checks is a bound the chain knows. Which gates the operator authorized, and how much each has been used, are public too. A privacy claim that will not name its own limits is not a claim worth trusting.',
     quote: 'A design that hides its tradeoffs is hiding the wrong thing.',
   },
 ] as const;
 
 const LEDGER = [
-  ['members', 'Commitments of approved members. Each leaf is a hash.'],
-  ['nullifiers', 'Spent access tokens. Opaque, salted per verifier.'],
+  ['members', 'Commitments of approved members. Each leaf is a hash of a secret, a role and a deadline.'],
+  ['nullifiers', 'Spent access tokens. Opaque, salted per verifier and per epoch.'],
+  ['verifiers', 'The gates the operator has authorized. They can be withdrawn in one transaction.'],
+  ['verifierAccesses', 'How much each authorized gate has been used. Counts, not identities.'],
   ['epoch', 'Bumped on revocation, voiding outstanding proofs.'],
   ['accessCount', 'Aggregate usage. Nothing per person.'],
+  ['issued', 'Credentials issued. A batch of four counts as four.'],
+  ['revocations', 'Revocations performed. Issued minus revocations bounds the live set.'],
+  ['paused', 'Whether access is frozen. Administration keeps working while it is.'],
+  ['pendingAdmin', 'That a handover has been proposed. Not who it goes to.'],
   ['admin', 'That an operator exists. Not who they are.'],
 ] as const;
 
