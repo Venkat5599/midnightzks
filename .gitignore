@@ -30,3 +30,9 @@ Plans/
 # (see frontend/scripts/sync-zk.mjs --with-prover). Reproducible from the
 # contract source and several MB each, so they are not served from the repo.
 frontend/public/zk/keys/*.prover
+
+# Overnight deploy scratch state and the per-step runner logs. Working notes, not
+# deliverables: the addresses they mention are public, but nothing in them is
+# part of the system.
+.session-state.txt
+preprod-*.log
