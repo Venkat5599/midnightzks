@@ -21,13 +21,50 @@ export {
 
 export { witnesses, type TrienWitnesses } from './witnesses.ts';
 
-export { createPrivateState, randomPrivateState, type TrienPrivateState } from './types.ts';
+export {
+  createOperatorState,
+  createPrivateState,
+  OPERATOR_ROLE,
+  randomPrivateState,
+  roleFromString,
+  type TrienPrivateState,
+} from './types.ts';
 
 /**
  * The circuits this contract exposes, as the identifiers midnight-js uses to
  * look up ZK artifacts. Kept here so a typo in a circuit name is a compile
  * error in every consumer rather than a runtime "key not found" during proving.
+ *
+ * Order is the order they appear in the source, not the order they are used:
+ * setup, membership, verifiers, administration, then the access proof itself.
  */
-export const CIRCUIT_IDS = ['initialize', 'register', 'revoke', 'proveAccess'] as const;
+export const CIRCUIT_IDS = [
+  'initialize',
+  'register',
+  'registerMany',
+  'revoke',
+  'authorizeVerifier',
+  'revokeVerifier',
+  'pause',
+  'unpause',
+  'proposeAdmin',
+  'acceptAdmin',
+  'proveAccess',
+] as const;
 
 export type TrienCircuitId = (typeof CIRCUIT_IDS)[number];
+
+/** The circuits that only the operator key can run. */
+export const OPERATOR_CIRCUIT_IDS = [
+  'initialize',
+  'register',
+  'registerMany',
+  'revoke',
+  'authorizeVerifier',
+  'revokeVerifier',
+  'pause',
+  'unpause',
+  'proposeAdmin',
+] as const satisfies readonly TrienCircuitId[];
+
+export type TrienOperatorCircuitId = (typeof OPERATOR_CIRCUIT_IDS)[number];
