@@ -1,26 +1,36 @@
-﻿$ compact --version
+$ compact --version
 compact 0.5.1
 
 $ compact compile src/trien.compact src/managed/trien
-Compiling 4 circuits:
+Compiling 11 circuits:
 
 $ ls src/managed/trien/keys src/managed/trien/zkir
 src/managed/trien/keys:
-initialize.prover
+acceptAdmin.verifier
+authorizeVerifier.verifier
 initialize.verifier
-proveAccess.prover
+pause.verifier
+proposeAdmin.verifier
 proveAccess.verifier
-register.prover
 register.verifier
-revoke.prover
+registerMany.verifier
 revoke.verifier
+revokeVerifier.verifier
+unpause.verifier
 
 src/managed/trien/zkir:
-initialize.bzkir
+acceptAdmin.zkir
+authorizeVerifier.zkir
 initialize.zkir
-proveAccess.bzkir
+pause.zkir
+proposeAdmin.zkir
 proveAccess.zkir
-register.bzkir
 register.zkir
-revoke.bzkir
+registerMany.zkir
 revoke.zkir
+revokeVerifier.zkir
+unpause.zkir
+
+# The compiler writes a .prover beside each .verifier. They are several MB
+# apiece and reproducible from trien.compact, so the committed tree keeps the
+# verifier keys and the ZKIR and .gitignore excludes the proving keys.
