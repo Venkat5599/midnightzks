@@ -42,3 +42,30 @@ export const PRIVATE_STATE_ID = 'trien';
 
 /** Name of the local (browser) private state database. */
 export const PRIVATE_STATE_STORE = 'trien-private-state';
+
+/**
+ * The roles this registry knows how to name.
+ *
+ * A role is a 32-byte label bound into a credential's commitment, so these are
+ * only the labels the instrument offers in a picker — the contract itself
+ * accepts any 32-byte value an operator chooses to issue.
+ */
+export const ROLES = ['role:member', 'role:editor', 'role:auditor'] as const;
+
+/** The role the instrument starts on. */
+export const DEFAULT_ROLE: string = ROLES[0];
+
+/**
+ * Verifier identifiers the operator is expected to authorize.
+ *
+ * A verifier is any 32-byte identifier a site chooses for itself; two are
+ * named here so the instrument's gates have something concrete to address,
+ * and any other value can be typed in.
+ */
+export const VERIFIERS = ['verifier:newsroom', 'verifier:clinic'] as const;
+
+/** The verifier the instrument starts on. */
+export const DEFAULT_VERIFIER: string = VERIFIERS[0];
+
+/** How long a freshly generated credential stays valid, in days. */
+export const DEFAULT_EXPIRY_DAYS = 365;
