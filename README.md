@@ -391,3 +391,54 @@ Proving happens locally on purpose: a proof server is handed the witness, and se
 - [x] X profile — [@trien_midnight](https://x.com/trien_midnight)
 
 ---
+
+## What's real vs pending — the honesty table
+
+| Feature | Status | Detail |
+|---|---|---|
+| Contract source — 11 circuits | ✅ Real | `contract/src/trien.compact`; compiles clean with `compactc` 0.31.1 (`Compiling 11 circuits:`) |
+| Four circuits + keys + ZKIR (v1) | ✅ Real | Committed under `src/managed/trien/` for the deployed instance; CI-reproducible from the v1 source |
+| Eleven circuits + verifier keys + ZKIR (v2) | ✅ Real | Regenerated from the v2 source with the same compiler, committed in this tree; CI recompiles from source on every push |
+| Test suite | ✅ Real | 52 tests, run against the real Compact runtime, covering every circuit and every assertion (see [Tests](#tests)) |
+| Roles bound into the commitment | ✅ Real | `commitmentOf(secret, role, expiry)`; a wrong role fails the proof, verified by test |
+| Deadlines enforced on chain | ✅ Real | `blockTimeLt` against the chain clock; tests move the simulator's clock past a deadline and watch the same credential stop working |
+| Verifier authorization + withdrawal | ✅ Real | `authorizeVerifier` / `revokeVerifier`; unauthorized verifiers are refused, verified by test |
+| Pause and two-sided handover | ✅ Real | `pause` / `unpause` / `proposeAdmin` / `acceptAdmin`, all verified by test |
+| Live dApp — operator pane | ✅ Real | Wires all ten administrative circuits through Lace; each call attaches with the private state it should run as |
+| Live dApp — gate pane | ✅ Real | Named verifier, required role, credential fields, and a preflight that says *why* a mismatched pair will be refused before a proof is generated |
+| Live dApp — ledger panel | ✅ Real | Reads the registry straight from the indexer with no wallet at all; shows counts and per-gate usage, never identities |
+| dApp instrument → v2 registry | 🟡 Next | The configured preprod address is the v1 four-circuit registry, and this build ships v2 circuits. Deploying v2 and setting `VITE_CONTRACT_ADDRESS` to it is the one step that needs a funded wallet — the instrument then runs against it unchanged. Until then the ledger panel reads whatever address is configured, and the operator pane will fail honestly rather than pretending |
+| Operator initialize on v2 | 🟡 Next | Needs the initialize proof, built in the wallet (Lace on preprod) — there is no headless path for the delegation step that funds it |
+| Member register + proveAccess on v2 | 🟡 Next | Land one real register and one real proveAccess tx on the v2 registry once initialize is bound |
+| Demo video | ✅ Real | [trien demo](https://youtu.be/5gKaCGEMLYc) — walkthrough of the live dApp: instrument firing, hold-to-reveal tracing proofs to the root (recorded against the v1 instrument) |
+| Source verification | ✅ Real | CI recompiles the contract from `trien.compact` on every push — committed circuits, keys and ZKIR are reproducible from source |
+| Contract verification | ✅ Real | 52-test suite against the real Compact runtime (the same interpreter the chain uses) + CI compile-from-source |
+
+---
+
+## Tests
+
+The suite runs the circuits through the real Compact runtime — the same interpreter the chain uses, minus proof generation — so every `assert` in the contract fires exactly as it would on Preprod. Fifty-two tests across nine groups:
+
+| Group | What it pins down |
+|---|---|
+| setup | The operator commitment is bound and is not the secret; re-initialization is refused; the admin hash uses its own domain |
+| registration | Operator-only; the published leaf is a hash; `issued` counts correctly; a batch of four lands four leaves; role and expiry change the commitment |
+| verifier authorization | Unauthorized verifiers are refused; authorization admits exactly one id; double-authorization is refused; withdrawal stops a gate without moving the epoch and leaves other gates working; per-verifier counters stay separate |
+| proving access | A registered member is admitted and publishes only a nullifier; unregistered parties are rejected; double-use is rejected; two verifiers get unlinkable nullifiers; two members stay distinct |
+| roles | The matching role is admitted; a member credential is refused at an editor gate and vice versa; one person with two roles gets one access per gate per epoch — and no way for the gate to tell; the role is not on the ledger |
+| expiry | Admitted before the deadline; refused after it, with the leaf still in the tree; a long-lived credential keeps working at the same clock; moving the clock rewrites nothing |
+| the emergency stop | Access is refused while paused; administration keeps working; unpause restores access; pausing twice or unpausing a running registry is refused; operator-only |
+| operator handover | A proposal does not change the operator; only the operator proposes; acceptance requires an outstanding proposal and the proposed key; control moves and the proposal clears; the outgoing operator loses access; an empty commitment can never be accepted |
+| what an observer can learn | Only counts and opaque hashes; the ledger's field set is exactly the documented eleven, and its serialization contains neither a secret nor a role |
+
+```
+ RUN  v2.1.9 /home/arch/midnightzks/contract
+
+ ✓ src/test/trien.test.ts (52 tests) 10780ms
+
+ Test Files  1 passed (1)
+      Tests  52 passed (52)
+```
+
+---
