@@ -438,6 +438,124 @@ describe('expiry', () => {
   });
 });
 
+describe('the emergency stop', () => {
+  it('refuses every access while paused', () => {
+    const sim = registryWith(alice.commitment);
+    sim.pause(operator);
+
+    expect(sim.ledger.paused).toBe(true);
+    expect(() => sim.proveAccess(alice.state, NEWSROOM, MEMBER)).toThrow(/paused/);
+    expect(sim.ledger.accessCount).toBe(0n);
+  });
+
+  it('keeps administration working while paused', () => {
+    const sim = registry();
+    sim.pause(operator);
+
+    // A freeze that also froze the response to whatever caused it would be a
+    // trap, so registration and verifier changes still work.
+    sim.register(operator, alice.commitment);
+    sim.authorizeVerifier(operator, bytes32('verifier:stranger'));
+
+    expect(sim.ledger.issued).toBe(1n);
+    expect(sim.ledger.verifiers.size()).toBe(3n);
+  });
+
+  it('restores access on unpause', () => {
+    const sim = registryWith(alice.commitment);
+    sim.pause(operator);
+    sim.unpause(operator);
+
+    sim.proveAccess(alice.state, NEWSROOM, MEMBER);
+
+    expect(sim.ledger.paused).toBe(false);
+    expect(sim.ledger.accessCount).toBe(1n);
+  });
+
+  it('refuses to pause twice or to unpause a running registry', () => {
+    const sim = registryWith(alice.commitment);
+
+    expect(() => sim.unpause(operator)).toThrow(/not paused/);
+    sim.pause(operator);
+    expect(() => sim.pause(operator)).toThrow(/already paused/);
+  });
+
+  it('lets only the operator pause or unpause', () => {
+    const sim = registryWith(alice.commitment);
+
+    expect(() => sim.pause(mallory.state)).toThrow(/not the operator/);
+    sim.pause(operator);
+    expect(() => sim.unpause(mallory.state)).toThrow(/not the operator/);
+    expect(sim.ledger.paused).toBe(true);
+  });
+});
+
+describe('operator handover', () => {
+  const successor = createOperatorState(bytes32('successor'));
+
+  it('publishes a proposal without changing the operator', () => {
+    const sim = registryWith(alice.commitment);
+    sim.proposeAdmin(operator, operatorCommitment(successor));
+
+    expect(sim.ledger.pendingAdmin).toEqual(operatorCommitment(successor));
+    expect(sim.ledger.admin).toEqual(OPERATOR_COMMITMENT);
+  });
+
+  it('lets only the operator propose a successor', () => {
+    const sim = registryWith(alice.commitment);
+
+    expect(() => sim.proposeAdmin(mallory.state, mallory.commitment)).toThrow(/not the operator/);
+    expect(sim.ledger.pendingAdmin).toEqual(bytes32(''));
+  });
+
+  it('refuses an acceptance with no proposal outstanding', () => {
+    const sim = registryWith(alice.commitment);
+
+    expect(() => sim.acceptAdmin(successor)).toThrow(/no operator handover proposed/);
+  });
+
+  it('refuses an acceptance from anyone but the proposed key', () => {
+    const sim = registryWith(alice.commitment);
+    sim.proposeAdmin(operator, operatorCommitment(successor));
+
+    sim.setTime(0);
+    expect(() => sim.acceptAdmin(mallory.state)).toThrow(/not the proposed operator/);
+    expect(sim.ledger.admin).toEqual(OPERATOR_COMMITMENT);
+  });
+
+  it('moves control to the successor and clears the proposal', () => {
+    const sim = registryWith(alice.commitment);
+    sim.proposeAdmin(operator, operatorCommitment(successor));
+
+    sim.acceptAdmin(successor);
+
+    expect(sim.ledger.admin).toEqual(operatorCommitment(successor));
+    expect(sim.ledger.pendingAdmin).toEqual(bytes32(''));
+  });
+
+  it('takes the registry away from the outgoing operator', () => {
+    const sim = registryWith(alice.commitment);
+    sim.proposeAdmin(operator, operatorCommitment(successor));
+    sim.acceptAdmin(successor);
+
+    expect(() => sim.register(operator, bob.commitment)).toThrow(/not the operator/);
+    sim.register(successor, bob.commitment);
+
+    expect(sim.ledger.issued).toBe(2n);
+  });
+
+  it('refuses a handover to an empty commitment', () => {
+    const sim = registryWith(alice.commitment);
+    sim.proposeAdmin(operator, bytes32(''));
+
+    // Proposing nobody is not a way to hand the registry to nobody: the
+    // proposal is recorded as empty and no one can accept it.
+    expect(sim.ledger.pendingAdmin).toEqual(bytes32(''));
+    expect(() => sim.acceptAdmin(operator)).toThrow(/no operator handover proposed/);
+    expect(sim.ledger.admin).toEqual(OPERATOR_COMMITMENT);
+  });
+});
+
 describe('revocation', () => {
   it('locks out the revoked member immediately', () => {
     const sim = registryWith(alice.commitment, bob.commitment);
