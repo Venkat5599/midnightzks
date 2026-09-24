@@ -442,3 +442,138 @@ The suite runs the circuits through the real Compact runtime — the same interp
 ```
 
 ---
+
+## Run it locally
+
+Requires **Node 22+**, **Docker** (for the proof server), and the **Compact toolchain**. On Windows, install the toolchain inside WSL — the compiler ships for Linux and macOS only, and Windows has its own unrelated `compact.exe` (the NTFS compression tool) that shadows it on `PATH`.
+
+```bash
+# 1. Compact toolchain
+curl --proto '=https' --tlsv1.2 -LsSf \
+  https://github.com/midnightntwrk/compact/releases/latest/download/compact-installer.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
+compact update 0.31.1
+compact --version         # compact 0.5.1 at this commit, selecting compiler 0.31.1
+
+# 2. Compile the circuits and run the tests
+cd contract
+npm install
+npm run compact           # writes src/managed/trien/  — needs a CPU with ADX, see below
+npm test
+
+# 3. Proof server, for anything that touches a real network
+docker run -d -p 6300:6300 -e PORT=6300 midnightnetwork/proof-server:latest
+
+# 4. The dApp
+cd ../frontend
+npm install
+npm run sync:zk           # copy the compiled circuits into public/zk/
+npm run dev               # http://localhost:5173
+```
+
+On Windows, step 2's compile is `wsl -d Ubuntu -- bash contract/compile.sh`.
+
+The compiler prints exactly this — it reports the count, not the names:
+
+```
+$ compact compile src/trien.compact src/managed/trien
+Compiling 11 circuits:
+```
+
+The circuits it built are visible in the output tree. Prover keys are large (multiple MB each), so the committed tree keeps the verifier keys and the ZKIR, and `.gitignore` excludes `keys/*.prover` and `zkir/*.bzkir` — both are reproducible from `trien.compact`:
+
+```
+$ ls src/managed/trien/keys src/managed/trien/zkir
+keys: acceptAdmin.verifier  authorizeVerifier.verifier  initialize.verifier  pause.verifier
+      proposeAdmin.verifier proveAccess.verifier        register.verifier    registerMany.verifier
+      revoke.verifier       revokeVerifier.verifier     unpause.verifier
+zkir: acceptAdmin.zkir      authorizeVerifier.zkir      initialize.zkir      pause.zkir
+      proposeAdmin.zkir     proveAccess.zkir            register.zkir        registerMany.zkir
+      revoke.zkir           revokeVerifier.zkir         unpause.zkir
+```
+
+![compile output](docs/media/3.png)
+
+The same output, as plain text, is in [`docs/media/compile-output.txt`](docs/media/compile-output.txt). `src/managed/trien/` holds `contract/` (generated TypeScript), `keys/` (prover and verifier keys per circuit) and `zkir/` (the ZK intermediate representation).
+
+**If `npm run compact` dies with `Exception: zkir returned a non-zero exit status -4`,** the front end compiled and the *key generator* hit an illegal instruction: `zkir` is built for CPUs with ADX, and older AMD parts (the A6-9225, for one) do not have it. Run the compile on a machine that does — CI does exactly that on every push — and copy `src/managed/trien/` back. The tests do not need it; they run locally against the committed artifacts.
+
+---
+
+## Deploy
+
+The proof server must be running first — proving happens locally, because a proof server is handed the witness:
+
+```bash
+docker run -d --rm -p 6300:6300 --name midnight-proof-server \
+  midnightnetwork/proof-server -- 'midnight-proof-server --num-workers 4'
+```
+
+Note the flag: the published image no longer accepts the `--network preview` argument older instructions pass; it exits immediately with `error: unexpected argument '--network' found`.
+
+```bash
+cd deploy
+npm install
+npm run new-wallet        # writes a throwaway seed to deploy/.env (gitignored)
+npm run address           # shielded address + tDUST fee balance
+npm run unshielded        # unshielded Night address — this is what the faucet wants
+npm run mnemonic          # the same seed as 24 words, for importing into Lace
+TRIEN_VERIFIERS="verifier:newsroom,verifier:clinic" npm run deploy
+```
+
+Deployment is two transactions on purpose. The first puts the circuits and an empty ledger on chain; `initialize` then writes the operator commitment into `admin`. Keeping them apart means the registry is inert until somebody proves they hold the operator secret, rather than the contract trusting whoever happened to submit the deployment.
+
+`TRIEN_VERIFIERS` is optional and matters: a freshly deployed registry admits nobody until at least one verifier is authorized, so naming the gates at deploy time is the difference between a registry that works and one that refuses everything for reasons that are correct but not obvious.
+
+Funding is the only manual step: the [preprod faucet](https://midnight-tmnight-preprod.nethermind.dev) dispenses tNight to the unshielded address, and tNight must be delegated (Lace → **Generate tDust**) before the fee balance is non-zero and the deploy completes. The result lands in `deploy/deployment.json`:
+
+```json
+{
+  "network": "preprod",
+  "contractAddress": "…",
+  "deployTxId": "…",
+  "initializeTxId": "…bound from the dApp — the initialize proof is built in the wallet, not headless",
+  "operatorCommitment": "…",
+  "authorizedVerifiers": ["verifier:newsroom", "verifier:clinic"],
+  "deployedAt": "…"
+}
+```
+
+---
+
+## Project layout
+
+```
+contract/
+  src/trien.compact          the contract (11 circuits)
+  src/index.ts               what consumers import, plus the circuit-id list
+  src/types.ts               the credential: secret, role, expiry
+  src/witnesses.ts           witness implementations (local, never sent)
+  src/test/simulator.ts      runs circuits against the real Compact runtime, with a clock
+  src/test/trien.test.ts     the test suite (52 tests)
+  src/managed/trien/         compiler output: circuits, verifier keys, ZKIR
+  compile.sh                 compiles via WSL on Windows
+deploy/
+  src/new-wallet.ts          generates a throwaway seed
+  src/address.ts             prints the address and balance
+  src/unshielded-address.ts  derives the unshielded Night address (faucet form)
+  src/deploy.ts              deploys, initializes, and authorizes the named verifiers
+  src/providers.ts           compiled-contract binding + providers
+  src/zk-config.ts           serves ZK artifacts from disk
+frontend/
+  src/App.tsx                the page
+  src/Plate.tsx              the allowlist, drawn
+  src/components/OperatorPanel.tsx  every administrative circuit, wired
+  src/components/GatePanel.tsx      a named gate, a required role, a credential
+  src/components/LedgerPanel.tsx    the registry read with no wallet at all
+  src/lib/registry-reader.ts        indexer → decoded ledger
+  src/lib/credentials.ts     the three parts of a credential, as a form
+  src/lib/contract.ts        registry binding, providers, hashing helpers
+  src/lib/lace.ts            wallet connect / disconnect
+  scripts/sync-zk.mjs        compiled circuits → public/zk/
+docs/media/                  README screenshots (1.png, 2.png, 3.png, compile-output.txt)
+.github/workflows/ci.yml     compile + typecheck + test on every push
+vercel.json                  build config for the deployed dApp
+```
+
+---
