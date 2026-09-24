@@ -46,6 +46,13 @@ jobs:
         working-directory: contract
         run: npm run compact
 
+      # Compiling proves the source builds. This proves the *committed* output
+      # is what the source builds to — without it, a contract change can land
+      # with stale keys and ZKIR and every test still passes, because the tests
+      # run against whatever was checked in.
+      - name: The committed artifacts match the source
+        run: git diff --exit-code -- contract/src/managed/trien
+
       - name: Typecheck
         working-directory: contract
         run: npm run typecheck
