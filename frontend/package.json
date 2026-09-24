@@ -9,7 +9,8 @@
     "prebuild": "npm run sync:zk",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "sync:zk": "node scripts/sync-zk.mjs"
+    "sync:zk": "node scripts/sync-zk.mjs",
+    "check:zk": "node scripts/check-zk.mjs"
   },
   "dependencies": {
     "@midnight-ntwrk/compact-runtime": "0.16.0",
