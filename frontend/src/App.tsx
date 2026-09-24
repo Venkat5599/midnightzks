@@ -286,10 +286,11 @@ export const App = () => {
             </Reveal>
             <Reveal delay={0.06}>
               <p className="m-0 max-w-[68ch] text-bone-2">
-                Written in Compact and compiled to four zero-knowledge circuits: initialize,
-                register, revoke and proveAccess. The test suite runs those circuits against the
-                real Compact runtime, the same interpreter the chain uses, so every assertion in the
-                contract fires exactly as it would on the network.
+                Written in Compact and compiled to eleven zero-knowledge circuits: initialize,
+                register, registerMany, revoke, authorizeVerifier, revokeVerifier, pause, unpause,
+                proposeAdmin, acceptAdmin and proveAccess. The test suite runs those circuits
+                against the real Compact runtime, the same interpreter the chain uses, so every
+                assertion in the contract fires exactly as it would on the network.
               </p>
               <p className="m-0 mt-5 max-w-[68ch] text-bone-2">
                 Proving happens locally. A proof server is handed the witness, so pointing it at
