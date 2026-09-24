@@ -132,4 +132,14 @@ export const operatorStateOf = (secret: Uint8Array): TrienPrivateState =>
 export const labelOf = (label: string): Uint8Array => roleFromString(label);
 
 /** The commitment an operator secret owns — the value `initialize` binds. */
+export const operatorCommitmentOf = (secret: Uint8Array): Uint8Array =>
+  pureCircuits.adminCommitmentOf(secret);
+
+/** The nullifier a credential would publish at a verifier, for explanation only. */
+export const nullifierOf = (
+  secret: Uint8Array,
+  verifierId: Uint8Array,
+  epoch: bigint,
+): Uint8Array => pureCircuits.nullifierOf(secret, verifierId, epoch);
+
 export { NETWORK_ID };
