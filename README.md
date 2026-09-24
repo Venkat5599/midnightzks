@@ -288,3 +288,64 @@ export circuit acceptAdmin(): [] {
 `pause` stops admissions and nothing else — registration, verifier changes and handover keep working while access is frozen, so a freeze does not also freeze the response to whatever caused it. Handover is two-sided and public: the outgoing operator proposes a commitment, and the successor takes over by proving knowledge of the secret behind it. No secret is ever transmitted, a typo cannot lock the registry out of its own administration, and the registry cannot be handed to an address nobody controls (an empty commitment can be proposed but never accepted).
 
 ---
+
+## Circuit reference
+
+| Circuit | Who | What it asserts | What it changes |
+| --- | --- | --- | --- |
+| `initialize` | anyone, once | `admin` is still empty | Binds `H("gk:admin", secret)` as the operator |
+| `register` | operator | caller holds the operator secret | Inserts one leaf, `issued += 1` |
+| `registerMany` | operator | same | Inserts four leaves, `issued += 4` |
+| `revoke` | operator | same | Zeroes a leaf, resets tree history, `epoch += 1`, `revocations += 1` |
+| `authorizeVerifier` | operator | verifier is not already authorized | Adds a verifier, seeds its counter at 0 |
+| `revokeVerifier` | operator | verifier is authorized | Removes it. Effective on the next proof |
+| `pause` | operator | not already paused | `paused = true` |
+| `unpause` | operator | currently paused | `paused = false` |
+| `proposeAdmin` | operator | caller holds the operator secret | Records a proposed successor |
+| `acceptAdmin` | the proposed successor | proposal exists and matches the caller's operator commitment | Transfers `admin`, clears the proposal |
+| `proveAccess` | a member | not paused, verifier authorized, role matches, not expired, leaf in tree, current root, nullifier unspent | Spends a nullifier, `verifierAccesses[v] += 1`, `accessCount += 1` |
+
+Pure helpers, callable without a wallet: `adminCommitmentOf(secret)`, `commitmentOf(secret, role, expiry)`, `nullifierOf(secret, verifierId, epoch)`.
+
+---
+
+## Architecture
+
+```
+Lace wallet ──▶ Triện dApp ──▶ proof server (local, :6300)
+   │                │                │
+   │                └──▶ Midnight indexer / node (Preprod)
+   │                            │
+   │                            └──▶ Triện registry contract
+```
+
+Proving happens locally on purpose: a proof server is handed the witness, and sending that to someone else's host would give away the secret this design exists to protect.
+
+### Transaction flow
+
+```bash
+1. Operator deploys        → two txs: circuits + empty ledger, then initialize binds the admin commitment
+2. Operator authorizes     → authorizeVerifier(newsroom), authorizeVerifier(clinic)
+3. Operator registers      → register(commitment): proves operator identity, inserts a leaf
+4. Member proves           → witness (secret + role + deadline + path) stays local; tx publishes root, deadline, nullifier
+5. Observer reads          → ledger shows counts and opaque nullifiers, never identities
+6. Operator revokes        → revoke(index): zeroes leaf, resets history, bumps epoch
+7. Member re-proves        → stale path rejected, old nullifier void — revocation is retroactive
+8. Operator withdraws gate → revokeVerifier(newsroom): that gate stops, everyone else keeps working
+9. Operator freezes        → pause(): access stops, administration continues
+10. Operator hands over    → proposeAdmin(commitment), then acceptAdmin() from the successor
+```
+
+### Component by component
+
+| Component | Technology | Responsibility |
+|---|---|---|
+| Triện contract | Compact 0.23 | Members tree, nullifier set, verifier registry, epoch and counters, pause, handover — 11 circuits |
+| Witness driver | TypeScript (`@trien/contract`) | `memberSecret()` / `memberRole()` / `memberExpiry()` / `memberPath()` — never leave the machine |
+| Proof server | `midnightnetwork/proof-server` | Local proving; witness never sent to a host |
+| dApp | React 18, Vite 6, Lace connector | Operator pane (all 10 administrative circuits), gate pane (role + deadline + named verifier), a wallet-free ledger panel, hold-to-reveal |
+| Artifact sync | `frontend/scripts/sync-zk.mjs` | Copies the compiled circuits into `public/zk/` so the browser never proves against a circuit the contract no longer has |
+| Deploy tooling | `@midnight-ntwrk/wallet` 5.0.0 · 1.2.0 (preprod run) | Seed → unshielded address → tDust → deploy; initializes, and authorizes the gates named in `TRIEN_VERIFIERS` |
+| CI | GitHub Actions (Node 22) | Compile from source + typecheck + tests + frontend build |
+
+---
